@@ -286,6 +286,7 @@
   .runs-legend .rl.show{opacity:1; transform:translateY(0);}
   .runs-legend .rl i{width:12px;height:3px;border-radius:2px; display:block;}
   .runs-empty{font-size:12px; color:var(--text-dim); padding:18px 4px; text-align:center;}
+  .card-head-flex{display:flex; align-items:center; gap:4px; padding-right:10px;}
   .replay-btn{padding:4px 10px; border-radius:6px; border:1px solid var(--line); background:var(--recess);
     color:var(--text-dim); font-family:'Space Mono',monospace; font-size:10px; cursor:pointer;}
   .replay-btn:hover{border-color:var(--comp); color:var(--comp);}
@@ -410,6 +411,8 @@
             <span class="val-chip" id="ambVal" style="min-width:100px">&ndash;</span></div>
           <svg id="ambBar" viewBox="0 0 300 26" width="100%" style="margin:-4px 0 10px"></svg>
 
+          <label class="info-tip" tabindex="0" style="display:block; font-family:'Space Mono',monospace; font-size:11px; color:var(--silver); margin-bottom:6px;">Bushing oil<span class="ico">&#9432;</span>
+            <span class="tip-bubble">The oil that lubricates the lower-leg bushings — sold by weight (5wt, 10wt, 15wt...). On many forks this same fluid also fills the damper circuit (semi-bath / open-bath designs), which is why it's used here to drive the damping curve too. Fully sealed cartridge dampers (Fox FIT, RockShox Charger) run their own largely fixed internal fluid instead.</span></label>
           <select class="oil-sel" id="oilSel"></select>
           <div class="oil-spec">
             <div><div class="k">cSt @40&deg;C</div><div class="v" id="o40">&ndash;</div></div>
@@ -557,11 +560,13 @@
       </div>
 
       <div class="card collapsed" id="card-runs">
-        <button class="card-head" data-toggle="card-runs">
-          <span class="chev"></span>
-          <span class="card-title">5-Run Heat Build</span>
-          <button class="replay-btn" id="replayRuns" onclick="event.stopPropagation()">&#9654; Replay</button>
-        </button>
+        <div class="card-head-flex">
+          <button class="card-head" data-toggle="card-runs" style="flex:1">
+            <span class="chev"></span>
+            <span class="card-title">5-Run Heat Build</span>
+          </button>
+          <button class="replay-btn" id="replayRuns">&#9654; Replay</button>
+        </div>
         <div class="card-body">
           <p class="card-sub">Same fork, same clicks, same everything — only heat soak changes, one run at a time. Hit <b>Simulate 5 runs</b> in the setup panel above to fill this in.</p>
           <svg id="chartRuns" viewBox="0 0 660 320" width="100%"></svg>
@@ -640,7 +645,10 @@ F_stiction  = 8 + 26 &middot; (&nu;_bath / 32)^0.45</div>
             <p><b>Read the shapes and the percentages, not the newtons.</b> The relationships this tool draws &mdash; how a curve bends, how far two oils diverge when cold, how much low speed fades relative to high speed &mdash; are the part worth trusting. The absolute forces are illustrative. No dyno data from any manufacturer was used, and nothing here has been validated against a real damper.</p>
 
             <h4>8 &middot; Known gaps</h4>
-            <p>Seal and bushing friction is folded into a single bath-oil term rather than modelled. There is no negative spring or top-out behaviour. Rebound and compression share one bleed value. Shaft-speed distribution across real terrain is not represented, so the chart shows the whole velocity range equally even though a rider spends most of their time in a narrow band of it.</p>
+            <p>Seal and bushing friction is folded into a single bath-oil term rather than modelled. There is no negative spring or top-out behaviour. Rebound and compression share one bleed value. Shaft-speed distribution across real terrain is not represented, so the chart shows the whole velocity range equally even though a rider spends most of their time in a narrow band of it. The "bushing oil" list drives the damping curve as an educational stand-in &mdash; on many forks (semi-bath, open-bath, DVO/EXT-style serviceable dampers) that's genuinely the same fluid, but fully sealed cartridge dampers (Fox FIT, RockShox Charger) run their own largely fixed internal fluid instead, closer to 15 cSt @ 40&deg;C regardless of what bushing oil is in the lower legs. One entry, marked with an asterisk, is an estimate rather than a published figure &mdash; see tier 9.</p>
+
+            <h4>9 &middot; A marked estimate</h4>
+            <p><b>Shockcraft SSS60 Super Cold *</b> has no published lab cSt figures &mdash; Shockcraft doesn't release them for this blend. The values used here (40 cSt @ 40&deg;C, 12 cSt @ 100&deg;C, VI &asymp;300) are reverse-engineered from their comparative marketing claims: "2.5&times; more slippery than Motorex Supergliss 68K" and explicitly optimised for extreme cold, benchmarked against Supergliss 100K's independently-measured 103/11.3 cSt figures. Treat this one entry as directionally right, not lab-verified.</p>
 
           </div>
         </div>
@@ -671,7 +679,8 @@ const OILS = [
   {n:'Rock Oil SVI 10',                v40:32.00, v100:6.50, vi:170},
   {n:'RockShox 10wt (Torco 15)',       v40:33.00, v100:8.40, vi:240},
   {n:'Bel-Ray Fork Oil 10wt',          v40:33.00, v100:5.90, vi:123},
-  {n:'Maxima Racing Fork 15wt',        v40:46.00, v100:8.50, vi:154}
+  {n:'Maxima Racing Fork 15wt',        v40:46.00, v100:8.50, vi:154},
+  {n:'Shockcraft SSS60 Super Cold *',  v40:40.00, v100:12.00, vi:300, estimated:true}
 ];
 const BATH_OILS = [
   {n:'Motorex SuperGliss / Fox 20wt Gold', v40:98.90, v100:13.60},
@@ -1312,11 +1321,12 @@ function syncUI(){
   o100.textContent = o.v100.toFixed(1);
   oVI.textContent = o.vi;
   oVI.className = 'v ' + (o.vi>=220?'vi-hi':o.vi>=150?'vi-mid':'vi-lo');
-  oilHint.textContent = o.vi>=220
+  oilHint.textContent = (o.vi>=220
     ? 'High viscosity index - holds its thickness as it heats. Damping stays consistent run to run.'
     : o.vi>=150
     ? 'Mid viscosity index. Noticeable but manageable fade over a long descent.'
-    : 'Low viscosity index - thins fast with heat, thickens hard when cold. Biggest swing between first run and last.';
+    : 'Low viscosity index - thins fast with heat, thickens hard when cold. Biggest swing between first run and last.')
+    + (o.estimated ? ' Shockcraft doesn\'t publish lab cSt for this blend - these numbers are estimated from their comparative claims (2.5x more slippery than Supergliss 68K, optimised for extreme cold), not measured.' : '');
 
   const nu = nuOf(s), nu20 = cSt(s.oil, 20), ratio = nu/nu20;
   viscVal.textContent = nu.toFixed(1) + ' cSt';
