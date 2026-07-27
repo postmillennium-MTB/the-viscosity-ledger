@@ -142,6 +142,23 @@
     background:#0f1319; color:var(--text-dim); font-family:'Space Mono',monospace;
     font-size:10px; cursor:pointer;}
   .dim-toggle button.active{border-color:var(--comp); color:var(--comp); background:#20170e;}
+  .controls3d{display:none; align-items:center; gap:6px; margin-left:6px;}
+  .controls3d.on{display:flex;}
+  .seg3d{display:flex; gap:3px;}
+  .seg3d button{padding:4px 8px; border-radius:6px; border:1px solid var(--line);
+    background:#0f1319; color:var(--text-dim); font-family:'Space Mono',monospace; font-size:10px; cursor:pointer;}
+  .seg3d button.active{border-color:#7fb3ff; color:#7fb3ff; background:#0e1826;}
+  .rot-btn{width:24px; height:24px; border-radius:6px; border:1px solid var(--line);
+    background:#0f1319; color:var(--silver); font-size:12px; cursor:pointer;}
+  .chart-scroll{overflow-x:visible;}
+  .chart-scroll.deep{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .chart-scroll.deep svg{min-width:640px;}
+  .legend-strip{display:flex; align-items:center; gap:7px; margin:4px 0 2px;
+    font-family:'Space Mono',monospace; font-size:9.5px; color:var(--text-dim);}
+  .legend-strip .bar{flex:1; height:8px; border-radius:4px; max-width:180px;}
+  .ownership-note{font-size:11px; color:#9fb3d9; background:rgba(127,179,255,.07);
+    border:1px solid rgba(127,179,255,.25); border-left:2px solid #7fb3ff; border-radius:6px;
+    padding:6px 9px; margin:0 0 10px; line-height:1.45;}
   .link-row{display:flex; align-items:center; gap:8px; margin:-6px 0 10px;}
   .demo-btn{width:100%; padding:10px; border-radius:9px; border:1px solid var(--comp);
     background:linear-gradient(90deg, rgba(255,150,64,.16), rgba(255,150,64,.05));
@@ -413,15 +430,29 @@
           <span class="chart-legend" id="legendA"></span>
         </button>
         <div class="card-body">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
             <p class="card-sub" id="panelASub">Rebound plotted left of zero as positive force, the same convention as a dyno printout. Line style tells you which setup.</p>
-            <div class="dim-toggle">
-              <button id="btn2d" class="active">2D</button>
-              <button id="btn3d">3D</button>
-              <button id="btnRot" style="display:none">&#8635;</button>
+            <div style="display:flex; align-items:center;">
+              <div class="dim-toggle">
+                <button id="btn2d" class="active">2D</button>
+                <button id="btn3d">3D</button>
+              </div>
+              <div class="controls3d" id="controls3d">
+                <div class="seg3d">
+                  <button id="btnComp" class="active">COMP</button>
+                  <button id="btnReb">REB</button>
+                </div>
+                <button class="rot-btn" id="btnRot" title="Rotate view">&#8635;</button>
+              </div>
             </div>
           </div>
-          <svg id="chartA" viewBox="0 0 660 320" width="100%"></svg>
+          <div class="ownership-note" id="ownershipNote" style="display:none"></div>
+          <div class="legend-strip" id="legendStrip" style="display:none">
+            <span>0 N</span><div class="bar" id="legendBar"></div><span id="legendMaxLabel">2600 N</span>
+          </div>
+          <div class="chart-scroll" id="chartAWrap">
+            <svg id="chartA" viewBox="0 0 660 340" width="100%"></svg>
+          </div>
           <div class="stat-grid" id="statsA"></div>
         </div>
       </div>
@@ -872,38 +903,36 @@ function buildStatsA(){
   }).join('');
 }
 
-/* ============ PANEL A - 3D SURFACE (rebuilt) ============ */
-/* Axes: X = shaft speed, Y = oil temperature, Z = compression force.
-   Isometric projection, painter's algorithm, shaded quad mesh. */
-let mode3d = false, viewAngle = 0;
+/* ============ PANEL A - 3D SURFACE (v2: legible pass) ============ */
+/* Axes: X = shaft speed, Y = oil temperature, Z = force. Neutral axis chrome,
+   colour reserved for data. Surface uses the same blue->red heat ramp as the
+   run-sweep, so "hot" always means the same thing everywhere in the tool. */
+let mode3d = false, viewAngle = 0, surfaceSide = 'comp';
+let hoverPt = null, gridPts = [];
 
 const D3 = {
   VMAX: 800, TMIN: 0, TMAX: 70, FMAX: 2600,
-  ox: 96, oy: 268,
-  ux: 300, uy: 34,     // shaft-speed axis: right, slightly toward viewer
-  wx: 172, wy: -74,    // temperature axis: right, receding
-  zh: 178              // force axis: straight up
+  ox: 108, oy: 272,
+  ux: 300, uy: 34,
+  wx: 172, wy: -74,
+  zh: 178
 };
 
-function proj(u, wv, z){                 // u,wv,z all normalised 0..1
+function proj(u, wv, z){
   const d = D3, sign = viewAngle ? -1 : 1;
   const U = sign>0 ? u : 1-u;
-  return [ d.ox + U*d.ux + wv*d.wx,
-           d.oy + U*d.uy - wv*d.wy - z*d.zh ];
+  return [ d.ox + U*d.ux + wv*d.wx, d.oy + U*d.uy - wv*d.wy - z*d.zh ];
 }
-const nrmF = f => Math.min(f, D3.FMAX)/D3.FMAX;
-
-function surfPoint(v, t, base){
-  const st = Object.assign({}, base, {ambF: F(t), soak: 0});
-  return {f: compForce(v, st), st};
-}
+const nrmF = f => Math.min(Math.max(f,0), D3.FMAX)/D3.FMAX;
+function sideForceFn(){ return surfaceSide==='comp' ? compForce : rebForce; }
 
 function drawA3D(){
-  const d = D3, base = CFG[editing].s;
-  const NV = 16, NT = 10;
+  const d = D3, base = CFG[editing].s, ff = sideForceFn();
+  const NV = 8, NT = 7;                 // aligned to axis ticks: 100mm/s and 10C steps
   let s = '';
 
-  /* ---- back walls ---- */
+  /* ---- walls + floor ---- */
+  const AXC = 'var(--silver-dim)';
   const wallT = [proj(0,0,0), proj(0,1,0), proj(0,1,1), proj(0,0,1)];
   const wallV = [proj(0,1,0), proj(1,1,0), proj(1,1,1), proj(0,1,1)];
   s += `<path d="${P(wallV)} Z" fill="#12161f" stroke="var(--line)" stroke-width="0.8"/>`;
@@ -911,120 +940,198 @@ function drawA3D(){
   const floor = [proj(0,0,0), proj(1,0,0), proj(1,1,0), proj(0,1,0)];
   s += `<path d="${P(floor)} Z" fill="#0b0e14" stroke="var(--line)" stroke-width="0.8"/>`;
 
-  /* ---- wall gridlines (force levels) ---- */
-  for(let i=1;i<=4;i++){
+  /* ---- wall gridlines: force levels (z) and speed lines (x) on the back wall ---- */
+  for(let i=0;i<=4;i++){
     const z=i/4;
-    s += `<line x1="${proj(0,1,z)[0]}" y1="${proj(0,1,z)[1]}" x2="${proj(1,1,z)[0]}" y2="${proj(1,1,z)[1]}" stroke="var(--line)" stroke-width="0.6" opacity="0.7"/>`;
-    s += `<line x1="${proj(0,0,z)[0]}" y1="${proj(0,0,z)[1]}" x2="${proj(0,1,z)[0]}" y2="${proj(0,1,z)[1]}" stroke="var(--line)" stroke-width="0.6" opacity="0.7"/>`;
+    s += `<line x1="${proj(0,1,z)[0]}" y1="${proj(0,1,z)[1]}" x2="${proj(1,1,z)[0]}" y2="${proj(1,1,z)[1]}" stroke="var(--line)" stroke-width="0.6" opacity="0.6"/>`;
+    s += `<line x1="${proj(0,0,z)[0]}" y1="${proj(0,0,z)[1]}" x2="${proj(0,1,z)[0]}" y2="${proj(0,1,z)[1]}" stroke="var(--line)" stroke-width="0.6" opacity="0.6"/>`;
+  }
+  for(let i=0;i<=4;i++){
+    const u=i/4;
+    s += `<line x1="${proj(u,0,0)[0]}" y1="${proj(u,0,0)[1]}" x2="${proj(u,1,0)[0]}" y2="${proj(u,1,0)[1]}" stroke="var(--line)" stroke-width="0.5" opacity="0.4"/>`;
   }
 
-  /* ---- cavitation plane ---- */
+  /* ---- cavitation plane, clipped so it visibly meets the surface ---- */
   const zc = nrmF(CAV_N);
   const cav = [proj(0,0,zc), proj(1,0,zc), proj(1,1,zc), proj(0,1,zc)];
-  s += `<path d="${P(cav)} Z" fill="var(--caution)" fill-opacity="0.11" stroke="var(--caution)" stroke-width="0.9" stroke-dasharray="5,4" stroke-opacity="0.55"/>`;
-  const cavL = proj(1,0,zc);
-  s += `<text x="${cavL[0]+7}" y="${cavL[1]+3}" font-size="8.5" fill="var(--caution)" font-family="Space Mono,monospace">CAVITATION ${CAV_N} N</text>`;
+  s += `<path d="${P(cav)} Z" fill="var(--caution)" fill-opacity="0.09" stroke="var(--caution)" stroke-width="1" stroke-dasharray="5,4" stroke-opacity="0.6"/>`;
 
-  /* ---- surface quads, far to near ---- */
-  const grid = [];
+  /* ---- surface grid + points cache (for hover) ---- */
+  const grid=[]; gridPts=[];
   for(let i=0;i<=NV;i++){
     grid[i]=[];
     for(let j=0;j<=NT;j++){
-      const v = i/NV*d.VMAX;
-      const t = d.TMIN + j/NT*(d.TMAX-d.TMIN);
-      grid[i][j] = surfPoint(v, t, base).f;
+      const v = i/NV*d.VMAX, t = d.TMIN + j/NT*(d.TMAX-d.TMIN);
+      const st = Object.assign({}, base, {ambF:F(t), soak:0});
+      const f = ff(v, st);
+      grid[i][j]=f;
+      const pp = proj(i/NV, j/NT, nrmF(f));
+      gridPts.push({x:pp[0], y:pp[1], v:Math.round(v), t:Math.round(t), f});
     }
   }
+
+  /* ---- intersection contour with the cavitation plane (where the surface crosses it) ---- */
+  let contourPts=[];
+  for(let i=0;i<=NV;i++){
+    for(let j=0;j<NT;j++){
+      const f0=grid[i][j], f1=grid[i][j+1];
+      if((f0-CAV_N)*(f1-CAV_N) <= 0 && f0!==f1){
+        const frac=(CAV_N-f0)/(f1-f0);
+        const t=(j+frac)/NT;
+        contourPts.push(proj(i/NV, t, zc));
+      }
+    }
+  }
+  if(contourPts.length>1){
+    contourPts.sort((a,b)=>a[0]-b[0]);
+    s += `<path d="${P(contourPts)}" fill="none" stroke="var(--caution)" stroke-width="1.6" stroke-linecap="round"/>`;
+  }
+
+  /* ---- surface quads, painter's algorithm, coloured with the shared heat ramp ---- */
   const quads=[];
   for(let i=0;i<NV;i++) for(let j=0;j<NT;j++){
     const zs=[grid[i][j],grid[i+1][j],grid[i+1][j+1],grid[i][j+1]];
     const pts=[proj(i/NV,j/NT,nrmF(zs[0])), proj((i+1)/NV,j/NT,nrmF(zs[1])),
                proj((i+1)/NV,(j+1)/NT,nrmF(zs[2])), proj(i/NV,(j+1)/NT,nrmF(zs[3]))];
     const hAvg = zs.reduce((a,b)=>a+b,0)/4;
-    quads.push({depth:(j/NT) - (i/NV), pts, h:nrmF(hAvg), over:hAvg>=CAV_N});
+    const isoI = (i%2===0), isoJ = (j%2===0);       // aligns with ticks at 200mm/s & 20C
+    quads.push({depth:(j/NT)-(i/NV), pts, h:nrmF(hAvg), over:hAvg>=CAV_N, iso: isoI||isoJ});
   }
   quads.sort((a,b)=>b.depth-a.depth);
   quads.forEach(q=>{
-    const lo=[26,44,78], hi=[255,150,64];
-    const col='rgb('+lo.map((c,k)=>Math.round(c+(hi[k]-c)*Math.pow(q.h,0.75))).join(',')+')';
-    s += `<path d="${P(q.pts)} Z" fill="${col}" fill-opacity="${q.over?0.55:0.82}" stroke="#0a0d12" stroke-width="0.35"/>`;
+    const col = heatColor(q.h);
+    s += `<path d="${P(q.pts)} Z" fill="${col}" fill-opacity="${q.over?0.5:0.85}" stroke="#0a0d12" stroke-width="${q.iso?0.9:0.35}" stroke-opacity="${q.iso?0.5:0.9}"/>`;
   });
 
-  /* ---- active setups as ridges at their own oil temperature ---- */
+  /* ---- active setups as ridges, matched to the surface side shown ---- */
+  const labelBoxes = [];
   active().forEach(c=>{
     const t = oilTemp(c.s);
     if(t < d.TMIN || t > d.TMAX) return;
     const wv=(t-d.TMIN)/(d.TMAX-d.TMIN);
+    const onSurface = c.id===editing;
     const pts=[];
-    for(let i=0;i<=NV*2;i++){
-      const v=i/(NV*2)*d.VMAX;
-      pts.push(proj(i/(NV*2), wv, nrmF(compForce(v,c.s))));
+    for(let i=0;i<=NV*3;i++){
+      const v=i/(NV*3)*d.VMAX;
+      pts.push(proj(i/(NV*3), wv, nrmF(ff(v,c.s))));
     }
     const da=c.dash?`stroke-dasharray="${c.dash}"`:'';
     const pu=c.id===pulseId?' class="pulse"':'';
-    s += `<path${pu} d="${P(pts)}" fill="none" stroke="#000" stroke-width="4.4" opacity="0.5"/>`;
-    s += `<path${pu} d="${P(pts)}" fill="none" stroke="${c.color}" stroke-width="2.6" ${da} stroke-linecap="round"/>`;
+    s += `<path${pu} d="${P(pts)}" fill="none" stroke="#000" stroke-width="4.6" opacity="0.45"/>`;
+    s += `<path${pu} d="${P(pts)}" fill="none" stroke="${c.color}" stroke-width="2.6" ${da} stroke-linecap="round" opacity="${onSurface?1:0.85}"/>`;
     const e=pts[pts.length-1], f0=proj(1,wv,0);
     s += `<line x1="${e[0]}" y1="${e[1]}" x2="${f0[0]}" y2="${f0[1]}" stroke="${c.color}" stroke-width="0.8" opacity="0.4" stroke-dasharray="2,3"/>`;
     s += `<circle cx="${e[0]}" cy="${e[1]}" r="3.4" fill="${c.color}" stroke="#0a0d12" stroke-width="1"/>`;
-    s += `<text x="${e[0]+7}" y="${e[1]+3}" font-size="8.5" fill="${c.color}" font-family="Space Mono,monospace">${c.name} &#183; ${Math.round(t)}&#176;C</text>`;
+
+    let ly = e[1];
+    labelBoxes.forEach(b=>{ if(Math.abs(b-ly)<12) ly = b+12; });
+    labelBoxes.push(ly);
+    const tag = onSurface ? '' : ' (ref.)';
+    s += `<text x="${e[0]+7}" y="${ly+3}" font-size="9" fill="${c.color}" font-family="Space Mono,monospace">${c.name}${tag} &#183; ${Math.round(t)}&#176;C</text>`;
   });
 
-  /* ---- run sweep ridges ---- */
+  /* ---- run sweep ridges, same side toggle applies ---- */
   if(runSweep){
+    const otherFn = surfaceSide==='comp' ? rebForce : compForce;
     sweepConfigs().forEach(r=>{
       const t=oilTemp(r.s); if(t>d.TMAX) return;
-      const wv=(t-d.TMIN)/(d.TMAX-d.TMIN), pts=[];
-      const rpts=[];
-      for(let i=0;i<=NV*2;i++){
-        pts.push(proj(i/(NV*2), wv, nrmF(compForce(i/(NV*2)*d.VMAX, r.s))));
-        rpts.push(proj(i/(NV*2), wv, nrmF(rebForce(i/(NV*2)*d.VMAX, r.s))));
-      }
+      const wv=(t-d.TMIN)/(d.TMAX-d.TMIN);
+      const pts=[]; for(let i=0;i<=NV*3;i++) pts.push(proj(i/(NV*3), wv, nrmF(ff(i/(NV*3)*d.VMAX, r.s))));
       const col=heatColor((r.n-1)/4);
-      s += `<path d="${P(rpts)}" fill="none" stroke="${col}" stroke-width="1.4" opacity="0.5" stroke-dasharray="4,3"/>`;
-      s += `<path d="${P(pts)}" fill="none" stroke="${col}" stroke-width="1.8" opacity="0.95"/>`;
+      s += `<path d="${P(pts)}" fill="none" stroke="${col}" stroke-width="1.9" opacity="0.95"/>`;
     });
   }
 
-  /* ================= AXES ================= */
-  const axis=(a,b,col)=>`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${col}" stroke-width="1.6"/>`;
-  const AX='#7fb3ff', AY='#ff9640', AZ='#5fd6a8';
-  s += axis(proj(0,0,0), proj(1,0,0), AX);
-  s += axis(proj(0,0,0), proj(0,1,0), AY);
-  s += axis(proj(0,0,0), proj(0,0,1), AZ);
+  /* ================= NEUTRAL AXES ================= */
+  const axis=(a,b)=>`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="var(--silver)" stroke-width="1.7"/>`;
+  s += axis(proj(0,0,0), proj(1,0,0));
+  s += axis(proj(0,0,0), proj(0,1,0));
+  s += axis(proj(0,0,0), proj(0,0,1));
 
-  // X ticks: shaft speed
   [0,200,400,600,800].forEach(v=>{
     const u=v/d.VMAX, pA=proj(u,0,0), pB=[pA[0]+3, pA[1]+9];
-    s += `<line x1="${pA[0]}" y1="${pA[1]}" x2="${pB[0]}" y2="${pB[1]}" stroke="${AX}" stroke-width="1"/>`;
-    s += `<text x="${pB[0]+1}" y="${pB[1]+9}" font-size="8.5" fill="${AX}" text-anchor="middle" font-family="Space Mono,monospace">${v}</text>`;
+    s += `<line x1="${pA[0]}" y1="${pA[1]}" x2="${pB[0]}" y2="${pB[1]}" stroke="${AXC}" stroke-width="1"/>`;
+    s += `<text x="${pB[0]+1}" y="${pB[1]+10}" font-size="9.5" fill="var(--text-dim)" text-anchor="middle" font-family="Space Mono,monospace">${v}</text>`;
   });
   const xm=proj(0.5,0,0);
-  s += `<text x="${xm[0]}" y="${xm[1]+36}" font-size="10" fill="${AX}" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="600" letter-spacing="1">X &#183; SHAFT SPEED (mm/s)</text>`;
+  s += `<text x="${xm[0]}" y="${xm[1]+40}" font-size="10.5" fill="var(--silver)" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" letter-spacing="1">X &#183; ${surfaceSide==='comp'?'COMPRESSION':'REBOUND'} SPEED (mm/s)</text>`;
 
-  // Y ticks: oil temperature
   [0,20,40,60,70].forEach(t=>{
     const wv=(t-d.TMIN)/(d.TMAX-d.TMIN), pA=proj(0,wv,0), pB=[pA[0]-9, pA[1]+3];
-    s += `<line x1="${pA[0]}" y1="${pA[1]}" x2="${pB[0]}" y2="${pB[1]}" stroke="${AY}" stroke-width="1"/>`;
-    s += `<text x="${pB[0]-3}" y="${pB[1]+3}" font-size="8.5" fill="${AY}" text-anchor="end" font-family="Space Mono,monospace">${t}&#176;/${F(t)}&#8457;</text>`;
+    s += `<line x1="${pA[0]}" y1="${pA[1]}" x2="${pB[0]}" y2="${pB[1]}" stroke="${AXC}" stroke-width="1"/>`;
+    s += `<text x="${pB[0]-3}" y="${pB[1]+3}" font-size="9.5" fill="var(--text-dim)" text-anchor="end" font-family="Space Mono,monospace">${t}&#176;/${F(t)}&#8457;</text>`;
   });
   const ym=proj(0,0.5,0);
-  s += `<text x="${ym[0]-30}" y="${ym[1]+34}" font-size="10" fill="${AY}" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="600" letter-spacing="1">Y &#183; OIL TEMP</text>`;
+  s += `<text x="${ym[0]-34}" y="${ym[1]+40}" font-size="10.5" fill="var(--silver)" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" letter-spacing="1">Y &#183; OIL TEMPERATURE</text>`;
 
-  // Z ticks: force
   [0,650,1300,1950,2600].forEach(fv=>{
     const z=fv/d.FMAX, pA=proj(0,0,z), pB=[pA[0]-7, pA[1]];
-    s += `<line x1="${pA[0]}" y1="${pA[1]}" x2="${pB[0]}" y2="${pB[1]}" stroke="${AZ}" stroke-width="1"/>`;
-    s += `<text x="${pB[0]-3}" y="${pB[1]+3}" font-size="8.5" fill="${AZ}" text-anchor="end" font-family="Space Mono,monospace">${fv}</text>`;
+    s += `<line x1="${pA[0]}" y1="${pA[1]}" x2="${pB[0]}" y2="${pB[1]}" stroke="${AXC}" stroke-width="1"/>`;
+    s += `<text x="${pB[0]-3}" y="${pB[1]+3}" font-size="9.5" fill="var(--text-dim)" text-anchor="end" font-family="Space Mono,monospace">${fv}${fv===1950?' \\u26A0':''}</text>`;
   });
   const zm=proj(0,0,1);
-  s += `<text x="${zm[0]-6}" y="${zm[1]-10}" font-size="10" fill="${AZ}" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="600" letter-spacing="1">Z &#183; FORCE (N)</text>`;
+  s += `<text x="${zm[0]-8}" y="${zm[1]-14}" font-size="10.5" fill="var(--silver)" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" letter-spacing="1">Z &#183; FORCE (N)</text>`;
 
-  s += `<text x="${d.ox+230}" y="20" font-size="9" fill="var(--silver-dim)" text-anchor="middle" font-family="Space Mono,monospace">SURFACE: ${CFG[editing].name} compression, swept across oil temperature</text>`;
+  /* ---- crosshair / hover-tap readout ---- */
+  if(hoverPt){
+    const p = hoverPt;
+    const st = Object.assign({}, base, {ambF:F(p.t), soak:0});
+    const fv = ff(p.v, st);
+    const pp = proj(p.v/d.VMAX, (p.t-d.TMIN)/(d.TMAX-d.TMIN), nrmF(fv));
+    const floorP = proj(p.v/d.VMAX, (p.t-d.TMIN)/(d.TMAX-d.TMIN), 0);
+    s += `<line x1="${pp[0]}" y1="${pp[1]}" x2="${floorP[0]}" y2="${floorP[1]}" stroke="#fff" stroke-width="1" stroke-dasharray="2,3" opacity="0.6"/>`;
+    s += `<circle cx="${pp[0]}" cy="${pp[1]}" r="4.5" fill="none" stroke="#fff" stroke-width="1.6"/>`;
+    s += `<circle cx="${pp[0]}" cy="${pp[1]}" r="2" fill="#fff"/>`;
+    const boxW=138, bx=Math.min(Math.max(pp[0]-boxW/2,4), 660-boxW-4), by=Math.max(pp[1]-46,4);
+    s += `<rect x="${bx}" y="${by}" width="${boxW}" height="34" rx="6" fill="#0a0d12" stroke="#fff" stroke-opacity="0.35"/>`;
+    s += `<text x="${bx+8}" y="${by+14}" font-size="9.5" fill="#fff" font-family="Space Mono,monospace">${p.v} mm/s &#183; ${p.t}&#176;C</text>`;
+    s += `<text x="${bx+8}" y="${by+27}" font-size="10.5" fill="#ffb27a" font-family="Space Mono,monospace" font-weight="700">${Math.round(fv)} N</text>`;
+  }
 
   document.getElementById('chartA').innerHTML = s;
   buildStatsA();
+  updateLegend3D();
 }
+
+function updateLegend3D(){
+  const strip=document.getElementById('legendStrip');
+  const note=document.getElementById('ownershipNote');
+  if(!mode3d){ strip.style.display='none'; note.style.display='none'; return; }
+  strip.style.display='flex'; note.style.display='block';
+  legendBar.style.background='linear-gradient(90deg, '+heatColor(0)+', '+heatColor(0.5)+', '+heatColor(1)+')';
+  legendMaxLabel.textContent = D3.FMAX + ' N';
+  const c=CFG[editing];
+  note.innerHTML = 'The shaded surface is built entirely from <b style="color:'+c.color+'">'+c.name+
+    '</b>\\u2019s own clicker settings, swept across every oil temperature. Other setups appear only as thin reference ridges — their line matches their own settings, but the surface underneath them still belongs to '+c.name+'.';
+}
+
+/* ---- pointer interaction: nearest grid point on hover / tap ---- */
+function svgLocal(svg, evt){
+  const rect = svg.getBoundingClientRect();
+  if(!rect.width) return null;
+  const vb = svg.viewBox.baseVal;
+  const x = (evt.clientX - rect.left) / rect.width * vb.width + vb.x;
+  const y = (evt.clientY - rect.top) / rect.height * vb.height + vb.y;
+  return [x,y];
+}
+function nearestGridPt(x,y){
+  let best=null, bd=Infinity;
+  gridPts.forEach(g=>{ const dx=g.x-x, dy=g.y-y, dd=dx*dx+dy*dy; if(dd<bd){bd=dd; best=g;} });
+  return best;
+}
+let raf3d = null;
+function handle3DPointer(evt){
+  if(!mode3d) return;
+  const svg = document.getElementById('chartA');
+  const loc = svgLocal(svg, evt);
+  if(!loc) return;
+  const g = nearestGridPt(loc[0], loc[1]);
+  if(!g) return;
+  hoverPt = {v:g.v, t:g.t};
+  if(raf3d) return;
+  raf3d = (window.requestAnimationFrame||function(f){return setTimeout(f,16);})(()=>{ raf3d=null; drawA3D(); });
+}
+function clear3DPointer(){ if(hoverPt){ hoverPt=null; drawA3D(); } }
 
 /* ============ PANEL B ============ */
 function drawB(){
@@ -1193,13 +1300,28 @@ document.querySelectorAll('#speedSeg button').forEach(b=>b.addEventListener('cli
 oilSel.addEventListener('change',e=>{cur().oil=+e.target.value; syncUI(); render();});
 bathSel.addEventListener('change',e=>{cur().bath=+e.target.value; syncUI(); render();});
 cavChk.addEventListener('change',render);
-btn2d.addEventListener('click',()=>{mode3d=false;btn2d.classList.add('active');btn3d.classList.remove('active');btnRot.style.display='none';
+btn2d.addEventListener('click',()=>{
+  mode3d=false; hoverPt=null;
+  btn2d.classList.add('active'); btn3d.classList.remove('active');
+  controls3d.classList.remove('on'); chartAWrap.classList.remove('deep');
   panelASub.textContent='Rebound plotted left of zero as positive force, the same convention as a dyno printout. Line style tells you which setup.';
-  render();});
-btnRot.addEventListener('click',()=>{viewAngle=viewAngle?0:1; render();});
-btn3d.addEventListener('click',()=>{mode3d=true;btn3d.classList.add('active');btn2d.classList.remove('active');btnRot.style.display='';
-  panelASub.textContent='Compression force as a surface over shaft speed and oil temperature. Each setup sits as a bold ridge at its own temperature, so you can see where it lands on the fade slope.';
-  render();});
+  render();
+});
+btn3d.addEventListener('click',()=>{
+  mode3d=true;
+  btn3d.classList.add('active'); btn2d.classList.remove('active');
+  controls3d.classList.add('on'); chartAWrap.classList.add('deep');
+  panelASub.textContent='Force as a surface over shaft speed and oil temperature. Drag or tap the surface to read exact values. The dashed line marks where it crosses the cavitation ceiling.';
+  render();
+});
+btnRot.addEventListener('click',()=>{ viewAngle=viewAngle?0:1; drawA3D(); });
+btnComp.addEventListener('click',()=>{ surfaceSide='comp'; btnComp.classList.add('active'); btnReb.classList.remove('active'); drawA3D(); });
+btnReb.addEventListener('click',()=>{ surfaceSide='reb'; btnReb.classList.add('active'); btnComp.classList.remove('active'); drawA3D(); });
+
+const chartAEl = document.getElementById('chartA');
+chartAEl.addEventListener('pointermove', handle3DPointer);
+chartAEl.addEventListener('pointerdown', handle3DPointer);
+chartAEl.addEventListener('pointerleave', clear3DPointer);
 rcross.addEventListener('input',e=>{cur().rcross=+e.target.value; rcrossVal.textContent=e.target.value+' mm/s'; render();});
 linkChk.addEventListener('change',()=>{cur().rlink=linkChk.checked; syncUI(); render();});
 customColor.addEventListener('input',e=>{CFG[editing].color=e.target.value; syncUI(); render();});
