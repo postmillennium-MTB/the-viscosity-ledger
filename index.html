@@ -285,6 +285,12 @@
     opacity:0; transform:translateY(4px); transition:opacity .35s ease, transform .35s ease;}
   .runs-legend .rl.show{opacity:1; transform:translateY(0);}
   .runs-legend .rl i{width:12px;height:3px;border-radius:2px; display:block;}
+  .run-cta{width:100%; padding:12px; margin-bottom:12px; border-radius:10px;
+    border:1px solid var(--caution); cursor:pointer;
+    background:linear-gradient(90deg, rgba(226,68,92,.16), rgba(226,68,92,.04));
+    color:var(--caution); font-family:'Space Grotesk',sans-serif; font-weight:700;
+    font-size:12.5px; letter-spacing:.05em; text-transform:uppercase; transition:all .15s ease;}
+  .run-cta:hover{background:rgba(226,68,92,.24);}
   .runs-empty{font-size:12px; color:var(--text-dim); padding:18px 4px; text-align:center;}
   .card-head-flex{display:flex; align-items:center; gap:4px; padding-right:10px;}
   .replay-btn{padding:4px 10px; border-radius:6px; border:1px solid var(--line); background:var(--recess);
@@ -559,7 +565,7 @@
         </div>
       </div>
 
-      <div class="card collapsed" id="card-runs">
+      <div class="card" id="card-runs">
         <div class="card-head-flex">
           <button class="card-head" data-toggle="card-runs" style="flex:1">
             <span class="chev"></span>
@@ -568,7 +574,8 @@
           <button class="replay-btn" id="replayRuns">&#9654; Replay</button>
         </div>
         <div class="card-body">
-          <p class="card-sub">Same fork, same clicks, same everything — only heat soak changes, one run at a time. Hit <b>Simulate 5 runs</b> in the setup panel above to fill this in.</p>
+          <p class="card-sub">Same fork, same clicks, same everything — only heat soak changes, one lap at a time. Watch how far the curve drops by the last run without anybody touching a dial.</p>
+          <button class="run-cta" id="runCta">&#9654; Run the 5-lap simulation</button>
           <svg id="chartRuns" viewBox="0 0 660 320" width="100%"></svg>
           <div class="runs-legend" id="runsLegend"></div>
         </div>
@@ -638,7 +645,7 @@ F_stiction  = 8 + 26 &middot; (&nu;_bath / 32)^0.45</div>
 
             <h4>7 &middot; What is sourced and what is not</h4>
             <div class="tiers">
-              <div class="tier t1"><b>VERIFIED</b><span>Walther / ASTM D341 is the industry-standard viscosity&ndash;temperature relation. Oil cSt and VI figures are manufacturer-published. The piecewise low-speed / crossover / high-speed structure follows established damper theory.</span></div>
+              <div class="tier t1"><b>VERIFIED</b><span>Walther / ASTM D341 is the industry-standard viscosity&ndash;temperature relation, and it has been <b>independently checked here</b>: the Motorex datasheet publishes a 20&nbsp;&deg;C viscosity that the model never sees as input, and predictions land within 1.0&ndash;1.3&nbsp;% of it across all three Supergliss grades (86 vs 85, 209 vs 207, 354 vs 350 cSt). Oil cSt and VI figures are manufacturer-published. The piecewise low-speed / crossover / high-speed structure follows established damper theory.</span></div>
               <div class="tier t2"><b>REASONED</b><span>Viscosity exponents 0.90 and 0.28, chosen to reflect laminar bleed flow versus turbulent port flow. Digressive n of 0.82 / 0.85. Heat-soak time constant. Direction is defensible; exact values are not measured.</span></div>
               <div class="tier t3"><b>PICKED</b><span>All absolute force magnitudes, the 4000&nbsp;N spring scale, the 1800&nbsp;N HBO scale, the 1950&nbsp;N cavitation ceiling, bleed and stiction coefficients. These are tuned to produce plausible-looking numbers, not fitted to any dyno.</span></div>
             </div>
@@ -647,9 +654,10 @@ F_stiction  = 8 + 26 &middot; (&nu;_bath / 32)^0.45</div>
             <h4>8 &middot; Known gaps</h4>
             <p>Seal and bushing friction is folded into a single bath-oil term rather than modelled. There is no negative spring or top-out behaviour. Rebound and compression share one bleed value. Shaft-speed distribution across real terrain is not represented, so the chart shows the whole velocity range equally even though a rider spends most of their time in a narrow band of it. The "bushing oil" list drives the damping curve as an educational stand-in &mdash; on many forks (semi-bath, open-bath, DVO/EXT-style serviceable dampers) that's genuinely the same fluid, but fully sealed cartridge dampers (Fox FIT, RockShox Charger) run their own largely fixed internal fluid instead, closer to 15 cSt @ 40&deg;C regardless of what bushing oil is in the lower legs. One entry, marked with an asterisk, is an estimate rather than a published figure &mdash; see tier 9.</p>
 
-            <h4>9 &middot; A marked estimate</h4>
-            <p><b>Shockcraft SSS60 Super Cold *</b> has no published lab cSt figures &mdash; Shockcraft doesn't release them for this blend. The values used here (40 cSt @ 40&deg;C, 12 cSt @ 100&deg;C, VI &asymp;300) are reverse-engineered from their comparative marketing claims: "2.5&times; more slippery than Motorex Supergliss 68K" and explicitly optimised for extreme cold, benchmarked against Supergliss 100K's independently-measured 103/11.3 cSt figures. Treat this one entry as directionally right, not lab-verified.</p>
-
+            <h4>9 &middot; Oil data provenance</h4>
+            <p>The bath-oil list comes straight off the <b>Motorex SUPERGLISS K technical datasheet</b> (viscosity per DIN 51562-1, VI per DIN ISO 2909, pour point per ASTM D5950): 32K is 33 / 5.8 cSt, VI 118, pour &minus;18&nbsp;&deg;C; 68K is 67 / 8.7, VI 102, pour &minus;21&nbsp;&deg;C; 100K is 103 / 11.3, VI 102. Shockcraft publishes matching temperature windows &mdash; 32K for &minus;10 to 10&nbsp;&deg;C, 68K for 0 to 30&nbsp;&deg;C, 100K for 10 to 40&nbsp;&deg;C &mdash; which is why those ranges appear in the dropdown.</p>
+            <p>Worth knowing: Supergliss is a slideway oil, and Motorex explicitly says <b>do not use it in fork dampers</b>. It lubricates bushings. That is exactly why this tool keeps the two lists separate &mdash; the damper list drives the curve, the bath list drives stiction only.</p>
+            <p>The cold damper entry, Motorex Racing Fork 2.5wt, uses the post-2016 reformulation figures (14.5 / 4.5 cSt, VI &gt;250) that Motorex confirmed directly to Shockcraft after an earlier published table was found to be wrong. Its VI of 260 is among the highest in the list, which is what lets it stay workable when thicker oils stiffen up.</p>
           </div>
         </div>
       </div>
@@ -680,12 +688,15 @@ const OILS = [
   {n:'RockShox 10wt (Torco 15)',       v40:33.00, v100:8.40, vi:240},
   {n:'Bel-Ray Fork Oil 10wt',          v40:33.00, v100:5.90, vi:123},
   {n:'Maxima Racing Fork 15wt',        v40:46.00, v100:8.50, vi:154},
-  {n:'Shockcraft SSS60 Super Cold *',  v40:40.00, v100:12.00, vi:300, estimated:true}
+  {n:'Motorex Racing Fork 2.5wt (cold)', v40:14.50, v100:4.50, vi:260, cold:true}
 ];
+/* Motorex SUPERGLISS K datasheet (DIN 51562-1), ISO VG slideway oils.
+   Shockcraft's published temperature windows given alongside. */
 const BATH_OILS = [
-  {n:'Motorex SuperGliss / Fox 20wt Gold', v40:98.90, v100:13.60},
-  {n:'Maxima Fork Oil 10wt (bath)',        v40:32.00, v100:6.30},
-  {n:'Race Tech Light US-1 (bath)',        v40:15.20, v100:4.40}
+  {n:'Supergliss 32K \u00b7 cold, -10 to 10\u00b0C', v40:33.00,  v100:5.80,  vi:118, pour:-18},
+  {n:'Supergliss 68K \u00b7 all-round, 0 to 30\u00b0C', v40:67.00,  v100:8.70,  vi:102, pour:-21},
+  {n:'Supergliss 100K \u00b7 warm, 10 to 40\u00b0C', v40:103.00, v100:11.30, vi:102, pour:-21},
+  {n:'Fox 20wt Gold (bath)',                v40:98.90,  v100:13.60, vi:138, pour:-30}
 ];
 const DEFAULT_OIL = 7, DEFAULT_BATH = 0;
 
@@ -1326,7 +1337,7 @@ function syncUI(){
     : o.vi>=150
     ? 'Mid viscosity index. Noticeable but manageable fade over a long descent.'
     : 'Low viscosity index - thins fast with heat, thickens hard when cold. Biggest swing between first run and last.')
-    + (o.estimated ? ' Shockcraft doesn\'t publish lab cSt for this blend - these numbers are estimated from their comparative claims (2.5x more slippery than Supergliss 68K, optimised for extreme cold), not measured.' : '');
+    + (o.cold ? ' Motorex spec-sheet figures (post-2016 reformulation). Thin, and among the highest VI in this list - the documented pick for sub-freezing riding, where thicker oils turn to treacle.' : '');
 
   const nu = nuOf(s), nu20 = cSt(s.oil, 20), ratio = nu/nu20;
   viscVal.textContent = nu.toFixed(1) + ' cSt';
@@ -1343,7 +1354,7 @@ function syncUI(){
 function render(){
   drawMinis();
   drawAmbBar();
-  if(runSweep) drawRunsChart(false);
+  if(runSweep && !renderSkipRuns) drawRunsChart(false);
   if(mode3d) drawA3D(); else drawA();
   drawB();
   buildConversation();
@@ -1670,9 +1681,11 @@ document.querySelectorAll('.mini-toggle').forEach(b=>b.addEventListener('click',
 /* ============ RUN SWEEP - own dedicated chart ============ */
 const LAP_NAMES = ['First Lap','Lap 2','Warming Up','Getting Hot','Last Run'];
 
+let runsGen = 0, renderSkipRuns = false;
 function drawRunsChart(animate){
   const svg = document.getElementById('chartRuns');
   const legend = document.getElementById('runsLegend');
+  const gen = ++runsGen;          // any timeout from an earlier call is now stale
   legend.innerHTML = '';
 
   if(!runSweep){
@@ -1716,27 +1729,53 @@ function drawRunsChart(animate){
     return `<div class="rl" id="runLeg${r.n}"><i style="background:${col}"></i>${LAP_NAMES[r.n-1]} &middot; ${Math.round(oilTemp(r.s))}&deg;C</div>`;
   }).join('');
 
-  sw.forEach((r,i)=>{
-    const delay = animate ? i*320 : 0;
-    setTimeout(()=>{
+  if(!animate){
+    sw.forEach(r=>{
       const g = document.getElementById('runGroup'+r.n);
       const lg = document.getElementById('runLeg'+r.n);
       if(g) g.style.opacity = '1';
       if(lg) lg.classList.add('show');
-    }, delay);
+    });
+    return;
+  }
+  sw.forEach((r,i)=>{
+    setTimeout(()=>{
+      if(gen !== runsGen) return;   // a newer draw superseded this one
+      const g = document.getElementById('runGroup'+r.n);
+      const lg = document.getElementById('runLeg'+r.n);
+      if(g) g.style.opacity = '1';
+      if(lg) lg.classList.add('show');
+    }, i*320);
   });
 }
 
 runBtn.addEventListener('click',()=>{
   runSweep = !runSweep;
-  runBtn.textContent = runSweep ? 'Clear 5-run heat build' : 'Simulate 5 runs \u2014 heat build';
-  runBtn.style.opacity = runSweep ? 0.75 : 1;
+  syncRunUI();
   document.getElementById('card-convo').classList.remove('collapsed');
   if(runSweep) document.getElementById('card-runs').classList.remove('collapsed');
+  renderSkipRuns = true;
   render();
+  renderSkipRuns = false;
   drawRunsChart(true);
 });
 replayRuns.addEventListener('click',()=>{ if(runSweep) drawRunsChart(true); });
+
+function syncRunUI(){
+  runBtn.textContent = runSweep ? 'Clear 5-run heat build' : 'Simulate 5 runs \u2014 heat build';
+  runBtn.style.opacity = runSweep ? 0.75 : 1;
+  runCta.innerHTML = runSweep ? '\u21BB Run it again' : '\u25B6 Run the 5-lap simulation';
+  replayRuns.style.display = runSweep ? '' : 'none';
+}
+runCta.addEventListener('click',()=>{
+  if(!runSweep){
+    runSweep = true;
+    renderSkipRuns = true; render(); renderSkipRuns = false;
+  }
+  syncRunUI();
+  drawRunsChart(true);
+});
+syncRunUI();
 
 /* ============ INIT ============ */
 Object.keys(DIALS).forEach(buildDial);
