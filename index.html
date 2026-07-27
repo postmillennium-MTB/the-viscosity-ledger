@@ -170,6 +170,25 @@
     text-transform:uppercase; color:#7fb3ff; margin:14px 0 5px; font-weight:600;}
   .eli-box h5:first-child{margin-top:0;}
   .eli-box p{font-size:13.5px; line-height:1.66; color:#dfe3ea; margin:0 0 11px;}
+
+  .math{font-size:12.5px; line-height:1.6; color:#cfd4de;}
+  .math h4{font-family:'Space Grotesk',sans-serif; font-size:10.5px; letter-spacing:.07em;
+    text-transform:uppercase; color:var(--text-dim); margin:20px 0 7px; font-weight:600;}
+  .math h4:first-child{margin-top:0;}
+  .math p{margin:0 0 9px;}
+  .eq{font-family:'Space Mono',monospace; font-size:12px; background:#0b0e14;
+    border:1px solid var(--line); border-left:3px solid #7fb3ff; border-radius:7px;
+    padding:10px 13px; margin:0 0 10px; overflow-x:auto; white-space:pre; color:#e7e9ee;}
+  .eq .cm{color:var(--silver-dim);}
+  .tiers{display:grid; gap:7px; margin:2px 0 12px;}
+  .tier{display:flex; gap:9px; align-items:flex-start; background:#0e1117; border:1px solid var(--line);
+    border-radius:8px; padding:8px 11px;}
+  .tier b{font-family:'Space Mono',monospace; font-size:9.5px; letter-spacing:.06em;
+    padding:2px 7px; border-radius:4px; flex:none; margin-top:1px;}
+  .t1 b{background:rgba(95,214,168,.16); color:#5fd6a8; border:1px solid rgba(95,214,168,.4);}
+  .t2 b{background:rgba(245,213,71,.14); color:#f5d547; border:1px solid rgba(245,213,71,.38);}
+  .t3 b{background:rgba(226,68,92,.14); color:#ff6d80; border:1px solid rgba(226,68,92,.38);}
+  .tier span{font-size:12px; line-height:1.5; color:#cfd4de;}
   .convo .good{color:#5fd6a8;}
   .noken-badge{
     display:none; align-items:center; gap:7px; margin:-4px 0 12px;
@@ -427,6 +446,73 @@
         </button>
         <div class="card-body">
           <div class="convo" id="convoBody"></div>
+        </div>
+      </div>
+
+      <div class="card collapsed" id="card-math">
+        <button class="card-head" data-toggle="card-math">
+          <span class="chev"></span>
+          <span class="card-title"><span class="dot" style="background:#7fb3ff"></span>Under the Hood &mdash; the math</span>
+        </button>
+        <div class="card-body">
+          <div class="math">
+
+            <h4>1 &middot; The damping curve</h4>
+            <p>Both compression and rebound use the same piecewise shape: a straight line below the crossover, a power curve above it.</p>
+            <div class="eq">v &le; v_knee :   F(v) = k_low &middot; v
+v &gt; v_knee :   F(v) = F_knee + k_high &middot; (v &minus; v_knee)^n
+
+<span class="cm">where  F_knee = k_low &middot; v_knee</span></div>
+            <p><b>n</b> sets the character above the knee. n &lt; 1 is digressive (force flattens off), n = 1 is linear, n &gt; 1 is progressive. This build runs <b>n = 0.82</b> compression and <b>0.85</b> rebound &mdash; both digressive, which is how most modern MTB stacks behave. It is not currently exposed as a control.</p>
+
+            <h4>2 &middot; Where k_low and k_high come from</h4>
+            <div class="eq">k_low  = (clicker term) &times; bleedF &times; &mu;^0.90
+k_high = (tune term)    &times; &mu;^0.28
+
+bleedF = 1 / (0.45 + (bleed/10) &times; 1.15)
+&mu;      = &nu;(oil, T) / &nu;_ref     <span class="cm">&nu;_ref = Motorex 10 at 20&nbsp;&deg;C</span>
+
+comp: clicker = 0.55 + (LSC/22) &times; 1.95 ,  tune = 0.6 + (HSC/6) &times; 1.4
+reb : clicker = 0.50 + (LSR/19) &times; 1.60 ,  tune = 0.6 + (HSR/6) &times; 1.4</div>
+            <p>The two viscosity exponents are the load-bearing assumption in this whole tool. Low-speed flow is bleed-orifice dominated and close to laminar, so force tracks viscosity almost linearly (0.90). High-speed flow through shim ports is closer to turbulent and much less viscosity-sensitive (0.28). That gap is why heat guts low-speed support while barely touching big-hit control.</p>
+
+            <h4>3 &middot; Oil viscosity vs. temperature</h4>
+            <p>ASTM D341, the Walther relation, solved from each oil&rsquo;s published 40&nbsp;&deg;C and 100&nbsp;&deg;C points:</p>
+            <div class="eq">log&#8321;&#8320;( log&#8321;&#8320;( &nu; + 0.7 ) ) = A &minus; B &middot; log&#8321;&#8320;( T )   <span class="cm">T in kelvin</span>
+
+B = [ LL(&nu;&#8324;&#8320;) &minus; LL(&nu;&#8321;&#8320;&#8320;) ] / [ log&#8321;&#8320;(373.15) &minus; log&#8321;&#8320;(313.15) ]
+A = LL(&nu;&#8324;&#8320;) + B &middot; log&#8321;&#8320;(313.15)</div>
+
+            <h4>4 &middot; Oil temperature</h4>
+            <div class="eq">T_oil   = T_ambient + soak
+soak(n) = 40 &middot; ( 1 &minus; e^(&minus;n/2) )   <span class="cm">n = run number</span></div>
+            <p>Each run adds less heat than the one before, approaching an equilibrium the damper can shed.</p>
+
+            <h4>5 &middot; Spring, bottom-out and friction</h4>
+            <div class="eq">F_spring(x) = (psi/100) &middot; (x / 170)^prog &middot; 4000
+prog        = max( 0.95 , 1.6 + tokens &times; 0.35 )
+
+F_hbo(x)    = 1800 &middot; ((x &minus; 145)/25)^1.5 &middot; speedMult &middot; &mu;^0.4   <span class="cm">x &gt; 145 mm only</span>
+speedMult   = 0.5 slow / 1.0 med / 1.8 fast
+
+F_stiction  = 8 + 26 &middot; (&nu;_bath / 32)^0.45</div>
+            <p>Negative tokens (Noken-style high-volume cap) push <span style="font-family:'Space Mono',monospace">prog</span> down toward linear. The floor at 0.95 keeps the curve physical.</p>
+
+            <h4>6 &middot; Cavitation</h4>
+            <p>A flat ceiling at <b>1950&nbsp;N</b>. Above it the model is not describing anything real &mdash; it marks where a fork-sized damper tends to run out of oil supply and go harsh, not a calculated limit.</p>
+
+            <h4>7 &middot; What is sourced and what is not</h4>
+            <div class="tiers">
+              <div class="tier t1"><b>VERIFIED</b><span>Walther / ASTM D341 is the industry-standard viscosity&ndash;temperature relation. Oil cSt and VI figures are manufacturer-published. The piecewise low-speed / crossover / high-speed structure follows established damper theory.</span></div>
+              <div class="tier t2"><b>REASONED</b><span>Viscosity exponents 0.90 and 0.28, chosen to reflect laminar bleed flow versus turbulent port flow. Digressive n of 0.82 / 0.85. Heat-soak time constant. Direction is defensible; exact values are not measured.</span></div>
+              <div class="tier t3"><b>PICKED</b><span>All absolute force magnitudes, the 4000&nbsp;N spring scale, the 1800&nbsp;N HBO scale, the 1950&nbsp;N cavitation ceiling, bleed and stiction coefficients. These are tuned to produce plausible-looking numbers, not fitted to any dyno.</span></div>
+            </div>
+            <p><b>Read the shapes and the percentages, not the newtons.</b> The relationships this tool draws &mdash; how a curve bends, how far two oils diverge when cold, how much low speed fades relative to high speed &mdash; are the part worth trusting. The absolute forces are illustrative. No dyno data from any manufacturer was used, and nothing here has been validated against a real damper.</p>
+
+            <h4>8 &middot; Known gaps</h4>
+            <p>Seal and bushing friction is folded into a single bath-oil term rather than modelled. There is no negative spring or top-out behaviour. Rebound and compression share one bleed value. Shaft-speed distribution across real terrain is not represented, so the chart shows the whole velocity range equally even though a rider spends most of their time in a narrow band of it.</p>
+
+          </div>
         </div>
       </div>
     </div>
