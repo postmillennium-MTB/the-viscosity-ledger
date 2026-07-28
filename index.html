@@ -7,6 +7,24 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&family=EB+Garamond:ital@1&display=swap" rel="stylesheet">
 <style>
+  :root{
+    /* fallback only, in case data-theme is ever absent - matches Coil */
+    --bg:#eef3f0; --bg-hi:#f7faf8; --panel:#ffffff; --panel-2:#e9efec; --line:#cddad6;
+    --recess:#e2e9e5; --recess2:#d7e0dc;
+    --cap-b1:#2f6fe0; --cap-b2:#1642a0; --cap-b3:#0d2a6b;
+    --silver:#45535a; --silver-dim:#62777c;
+    --comp:#d9720c; --reb:#00a7c4; --spring:#00a878; --caution:#d1264f;
+    --text:#29343a; --text-dim:#54666b; --text-soft:#3d4d52;
+  }
+  [data-theme="coil"]{
+    /* COIL - light scheme, Caribou-derived (Trail Advocacy Atlas palette), default */
+    --bg:#eef3f0; --bg-hi:#f7faf8; --panel:#ffffff; --panel-2:#e9efec; --line:#cddad6;
+    --recess:#e2e9e5; --recess2:#d7e0dc;
+    --cap-b1:#2f6fe0; --cap-b2:#1642a0; --cap-b3:#0d2a6b;
+    --silver:#45535a; --silver-dim:#62777c;
+    --comp:#d9720c; --reb:#00a7c4; --spring:#00a878; --caution:#d1264f;
+    --text:#29343a; --text-dim:#54666b; --text-soft:#3d4d52;
+  }
   [data-theme="air"]{
     /* AIR - dark scheme, warmed slightly grey rather than black */
     --bg:#191c22; --bg-hi:#20242d; --panel:#20242c; --panel-2:#262b34; --line:#333a46;
@@ -16,21 +34,12 @@
     --comp:#ff9640; --reb:#35d0d0; --spring:#8fe050; --caution:#e2445c;
     --text:#e7e9ee; --text-dim:#9098a8; --text-soft:#ccd2dc;
   }
-  :root, [data-theme="coil"]{
-    /* COIL - light scheme, Caribou-derived (Trail Advocacy Atlas palette), default */
-    --bg:#eef3f0; --bg-hi:#f7faf8; --panel:#ffffff; --panel-2:#e9efec; --line:#cddad6;
-    --recess:#e2e9e5; --recess2:#d7e0dc;
-    --cap-b1:#2f6fe0; --cap-b2:#1642a0; --cap-b3:#0d2a6b;
-    --silver:#45535a; --silver-dim:#62777c;
-    --comp:#d9720c; --reb:#00a7c4; --spring:#00a878; --caution:#d1264f;
-    --text:#29343a; --text-dim:#54666b; --text-soft:#3d4d52;
-  }
   *{box-sizing:border-box;}
   body{margin:0; background:radial-gradient(ellipse at 20% -10%, var(--bg-hi) 0%, var(--bg) 55%); transition:background .25s ease;
     color:var(--text); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;}
   body.bg-pattern{
     background-color:var(--bg);
-    background-image:url('image/pmr-caribou-pattern.png');
+    background-image:url('pmr-caribou-pattern.png');
     background-repeat:repeat;
     background-size:620px auto;
     background-attachment:fixed;
