@@ -28,6 +28,13 @@
   *{box-sizing:border-box;}
   body{margin:0; background:radial-gradient(ellipse at 20% -10%, var(--bg-hi) 0%, var(--bg) 55%); transition:background .25s ease;
     color:var(--text); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;}
+  body.bg-pattern{
+    background-color:var(--bg);
+    background-image:url('image/pmr-caribou-pattern.png');
+    background-repeat:repeat;
+    background-size:620px auto;
+    background-attachment:fixed;
+  }
   .wrap{max-width:1200px; margin:0 auto; padding:26px 18px 56px;}
   .eyebrow{font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.18em;
     color:var(--silver-dim); text-transform:uppercase; margin-bottom:7px;}
@@ -1411,10 +1418,15 @@ copyBaseline.addEventListener('click',()=>{
   CFG[editing].s={...CFG[0].s}; CFG[editing].on=true; syncUI(); render();});
 
 /* ============ THEME ============ */
+let bgOn = false;
 document.querySelectorAll('[data-theme-btn]').forEach(b=>{
   b.addEventListener('click', ()=>{
     const t = b.dataset.themeBtn;
+    const alreadyActive = document.documentElement.getAttribute('data-theme') === t;
+    bgOn = alreadyActive ? !bgOn : true;   // switching themes always turns the pattern on;
+                                            // clicking the theme already active toggles it
     document.documentElement.setAttribute('data-theme', t);
+    document.body.classList.toggle('bg-pattern', bgOn);
     document.querySelectorAll('[data-theme-btn]').forEach(x=>x.classList.toggle('active', x===b));
   });
 });
