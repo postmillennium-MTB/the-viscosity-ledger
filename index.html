@@ -55,13 +55,14 @@
     border-bottom:1px solid var(--haze);
     padding:22px 24px 24px;
   }
+  /* Caribou pattern is permanent in BOTH themes now - no longer toggled on/off. */
   .hero-pattern{
     position:absolute; inset:0; z-index:0; pointer-events:none;
     background-image:url('pmr-caribou-pattern.png');
     background-repeat:repeat; background-size:420px auto;
-    opacity:0; transition:opacity .35s ease;
+    opacity:.5; transition:opacity .35s ease;
   }
-  .hero.bg-pattern .hero-pattern{opacity:.5;}
+  [data-theme="air"] .hero-pattern{opacity:.42;}
   .hero::after{
     content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
     background:linear-gradient(180deg, rgba(11,10,8,.25) 0%, rgba(11,10,8,.82) 100%);
@@ -242,8 +243,29 @@
     background:var(--panel); color:var(--text-dim); font-size:9.5px; cursor:pointer;}
   .seg3d button.active{color:var(--dust); background:var(--recess);}
   .rot-btn{width:25px; height:25px; border:1px solid var(--line);
-    background:var(--recess); color:var(--text-dim); font-size:12px; cursor:pointer;}
+    background:var(--recess); color:var(--text-dim); font-size:12px; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center; line-height:1;}
   .rot-btn:hover{border-color:var(--dust); color:var(--dust);}
+  .rot-btn.wide{width:auto; padding:0 8px; font-size:8.5px; letter-spacing:.12em;}
+  .rot-group{display:flex; gap:4px; align-items:center;}
+
+  /* ---- 3D work-in-progress banner + axis key ---- */
+  .wip-note{font-size:11px; font-weight:300; color:var(--text-soft);
+    background:rgba(140,58,30,.09); border:1px solid rgba(140,58,30,.34);
+    border-left:2px solid var(--caution);
+    padding:9px 11px; margin:0 0 11px; line-height:1.55;}
+  .wip-note b{color:var(--caution); font-weight:400; letter-spacing:.06em;}
+  .axis-key{display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); margin:0 0 11px;}
+  @media (max-width:640px){ .axis-key{grid-template-columns:1fr;} }
+  .axis-key .ak{background:var(--panel); padding:9px 11px; display:flex; gap:9px; align-items:flex-start;}
+  .axis-key .ax{flex:none; width:18px; height:18px; display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--dust); color:var(--dust); font-family:'Space Mono',monospace;
+    font-size:10px; margin-top:1px;}
+  .axis-key .ak b{display:block; font-weight:400; font-size:11px; color:var(--text); margin-bottom:2px;}
+  .axis-key .ak span.d{display:block; font-size:10px; font-weight:300; color:var(--text-dim); line-height:1.5;}
+  .axis-key .ak span.r{display:block; font-size:9.5px; color:var(--text-soft);
+    font-family:'Space Mono',monospace; margin-top:3px;}
   .chart-scroll{overflow-x:visible;}
   .chart-scroll.deep{overflow-x:auto; -webkit-overflow-scrolling:touch;}
   .chart-scroll.deep svg{min-width:640px;}
@@ -340,6 +362,30 @@
     font-size:11px; letter-spacing:.16em; text-transform:uppercase; transition:all .2s ease;}
   .run-cta:hover{background:var(--caution); color:var(--panel);}
   .runs-empty{font-size:12px; color:var(--text-dim); padding:19px 4px; text-align:center;}
+
+  /* ---- 5-run commentary ---- */
+  .runs-commentary{margin-top:16px; padding-top:15px; border-top:1px solid var(--line);
+    font-size:12.5px; font-weight:300; line-height:1.72; color:var(--text-soft);}
+  .runs-commentary h5{font-size:9.5px; letter-spacing:.24em; text-transform:uppercase;
+    color:var(--dust); margin:17px 0 7px; font-weight:400;}
+  .runs-commentary h5:first-child{margin-top:0;}
+  .runs-commentary p{margin:0 0 10px;}
+  .runs-commentary b{font-weight:400; color:var(--text);}
+  .runs-commentary em{color:var(--text); font-style:italic;}
+  .rc-amb{background:var(--recess); border:1px solid var(--line); border-left:2px solid var(--dust);
+    padding:11px 13px; margin:0 0 14px; font-size:12.5px; line-height:1.65;}
+  .rc-table{width:100%; border-collapse:collapse; margin:2px 0 13px;
+    font-family:'Space Mono',monospace; font-size:10.5px;}
+  .rc-table th{text-align:right; padding:6px 7px; border-bottom:1px solid var(--line);
+    color:var(--text-dim); font-weight:400; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase;}
+  .rc-table th:first-child, .rc-table td:first-child{text-align:left;}
+  .rc-table td{text-align:right; padding:6px 7px; border-bottom:1px solid var(--line); color:var(--text-soft);}
+  .rc-table tr:last-child td{border-bottom:0;}
+  .rc-table td .sw{display:inline-block; width:9px; height:9px; margin-right:7px; vertical-align:-1px;}
+  .rc-caveat{font-size:11px; line-height:1.6; color:var(--text-dim);
+    background:rgba(140,58,30,.07); border:1px solid rgba(140,58,30,.28);
+    border-left:2px solid var(--caution); padding:10px 12px; margin:12px 0 0;}
+  .rc-caveat b{color:var(--caution); font-weight:400;}
   .card-head-flex{display:flex; align-items:center; gap:4px; padding-right:12px;}
   .replay-btn{padding:5px 11px; border:1px solid var(--line); background:transparent;
     color:var(--text-dim); font-size:9.5px; cursor:pointer;}
@@ -348,7 +394,7 @@
 </style>
 </head>
 <body>
-<div class="hero" id="heroBand">
+<div class="hero bg-pattern" id="heroBand">
   <div class="hero-pattern"></div>
   <div class="hero-inner">
     <div class="hdr-row">
@@ -478,8 +524,8 @@
             <span class="tip-bubble">The oil that lubricates the lower-leg bushings — sold by weight (5wt, 10wt, 15wt...). On many forks this same fluid also fills the damper circuit (semi-bath / open-bath designs), which is why it's used here to drive the damping curve too. Fully sealed cartridge dampers (Fox FIT, RockShox Charger) run their own largely fixed internal fluid instead.</span></label>
           <select class="oil-sel" id="oilSel"></select>
           <div class="oil-spec">
-            <div><div class="k">cSt @40&deg;C</div><div class="v" id="o40">&ndash;</div></div>
-            <div><div class="k">cSt @100&deg;C</div><div class="v" id="o100">&ndash;</div></div>
+            <div><div class="k">cSt @40&deg;C / 104&#8457;</div><div class="v" id="o40">&ndash;</div></div>
+            <div><div class="k">cSt @100&deg;C / 212&#8457;</div><div class="v" id="o100">&ndash;</div></div>
             <div><div class="k">VISC. INDEX</div><div class="v" id="oVI">&ndash;</div></div>
           </div>
           <p class="hint" id="oilHint" style="margin-top:-4px"></p>
@@ -594,9 +640,31 @@
                   <button id="btnComp" class="active">COMP</button>
                   <button id="btnReb">REB</button>
                 </div>
-                <button class="rot-btn" id="btnRot" title="Rotate view">&#8635;</button>
+                <div class="rot-group">
+                  <button class="rot-btn" id="btnRotCCW" title="Rotate counter-clockwise">&#8634;</button>
+                  <button class="rot-btn" id="btnRotCW" title="Rotate clockwise">&#8635;</button>
+                  <button class="rot-btn wide" id="btnRotReset" title="Back to the default viewing angle">RESET</button>
+                </div>
               </div>
             </div>
+          </div>
+          <div class="wip-note" id="wipNote" style="display:none">
+            <b>WORK IN PROGRESS</b> &mdash; the 3D surface is still being built out. The projection, the
+            axis labelling and the rotation controls are all mid-revision, and the surface is drawn with a
+            simple painter's sort that can mis-layer where the sheet folds back on itself. Read it as a
+            <em>shape</em>, not as a measurement. Panel A in 2D is the more trustworthy view; this one is
+            here to show which way the whole field tilts as heat comes in.
+          </div>
+          <div class="axis-key" id="axisKey" style="display:none">
+            <div class="ak"><span class="ax">X</span><div><b>Shaft speed</b>
+              <span class="d">How fast the damper shaft itself is moving &mdash; not how fast you are riding.</span>
+              <span class="r">0 &ndash; 800 mm/s</span></div></div>
+            <div class="ak"><span class="ax">Y</span><div><b>Oil temperature</b>
+              <span class="d">The temperature of the damper fluid: outside air plus whatever heat the fork has soaked up.</span>
+              <span class="r">0 &ndash; 70 &deg;C / 32 &ndash; 158 &deg;F</span></div></div>
+            <div class="ak"><span class="ax">Z</span><div><b>Damping force</b>
+              <span class="d">Height of the surface. Taller means the fork is fighting back harder at that speed and temperature.</span>
+              <span class="r">0 &ndash; 2600 N &middot; ceiling at 1950 N</span></div></div>
           </div>
           <div class="ownership-note" id="ownershipNote" style="display:none"></div>
           <div class="legend-strip" id="legendStrip" style="display:none">
@@ -635,6 +703,7 @@
           <button class="run-cta" id="runCta">&#9654; Run the 5-lap simulation</button>
           <svg id="chartRuns" viewBox="0 0 660 320" width="100%"></svg>
           <div class="runs-legend" id="runsLegend"></div>
+          <div class="runs-commentary" id="runsCommentary" style="display:none"></div>
         </div>
       </div>
 
@@ -669,14 +738,14 @@ v &gt; v_knee :   F(v) = F_knee + k_high &middot; (v &minus; v_knee)^n
 k_high = (tune term)    &times; &mu;^0.28
 
 bleedF = 1 / (0.45 + (bleed/10) &times; 1.15)
-&mu;      = &nu;(oil, T) / &nu;_ref     <span class="cm">&nu;_ref = Motorex 10 at 20&nbsp;&deg;C</span>
+&mu;      = &nu;(oil, T) / &nu;_ref     <span class="cm">&nu;_ref = Motorex 10 at 20&nbsp;&deg;C / 68&nbsp;&#8457;</span>
 
 comp: clicker = 0.55 + (LSC/22) &times; 1.95 ,  tune = 0.6 + (HSC/6) &times; 1.4
 reb : clicker = 0.50 + (LSR/19) &times; 1.60 ,  tune = 0.6 + (HSR/6) &times; 1.4</div>
             <p>The two viscosity exponents are the load-bearing assumption in this whole tool. Low-speed flow is bleed-orifice dominated and close to laminar, so force tracks viscosity almost linearly (0.90). High-speed flow through shim ports is closer to turbulent and much less viscosity-sensitive (0.28). That gap is why heat guts low-speed support while barely touching big-hit control.</p>
 
             <h4>3 &middot; Oil viscosity vs. temperature</h4>
-            <p>ASTM D341, the Walther relation, solved from each oil&rsquo;s published 40&nbsp;&deg;C and 100&nbsp;&deg;C points:</p>
+            <p>ASTM D341, the Walther relation, solved from each oil&rsquo;s published 40&nbsp;&deg;C (104&nbsp;&#8457;) and 100&nbsp;&deg;C (212&nbsp;&#8457;) points:</p>
             <div class="eq">log&#8321;&#8320;( log&#8321;&#8320;( &nu; + 0.7 ) ) = A &minus; B &middot; log&#8321;&#8320;( T )   <span class="cm">T in kelvin</span>
 
 B = [ LL(&nu;&#8324;&#8320;) &minus; LL(&nu;&#8321;&#8320;&#8320;) ] / [ log&#8321;&#8320;(373.15) &minus; log&#8321;&#8320;(313.15) ]
@@ -702,17 +771,17 @@ F_stiction  = 8 + 26 &middot; (&nu;_bath / 32)^0.45</div>
 
             <h4>7 &middot; What is sourced and what is not</h4>
             <div class="tiers">
-              <div class="tier t1"><b>VERIFIED</b><span>Walther / ASTM D341 is the industry-standard viscosity&ndash;temperature relation, and it has been <b>independently checked here</b>: the Motorex datasheet publishes a 20&nbsp;&deg;C viscosity that the model never sees as input, and predictions land within 1.0&ndash;1.3&nbsp;% of it across all three Supergliss grades (86 vs 85, 209 vs 207, 354 vs 350 cSt). Oil cSt and VI figures are manufacturer-published. The piecewise low-speed / crossover / high-speed structure follows established damper theory.</span></div>
+              <div class="tier t1"><b>VERIFIED</b><span>Walther / ASTM D341 is the industry-standard viscosity&ndash;temperature relation, and it has been <b>independently checked here</b>: the Motorex datasheet publishes a 20&nbsp;&deg;C (68&nbsp;&#8457;) viscosity that the model never sees as input, and predictions land within 1.0&ndash;1.3&nbsp;% of it across all three Supergliss grades (86 vs 85, 209 vs 207, 354 vs 350 cSt). Oil cSt and VI figures are manufacturer-published. The piecewise low-speed / crossover / high-speed structure follows established damper theory.</span></div>
               <div class="tier t2"><b>REASONED</b><span>Viscosity exponents 0.90 and 0.28, chosen to reflect laminar bleed flow versus turbulent port flow. Digressive n of 0.82 / 0.85. Heat-soak time constant. Direction is defensible; exact values are not measured.</span></div>
               <div class="tier t3"><b>PICKED</b><span>All absolute force magnitudes, the 4000&nbsp;N spring scale, the 1800&nbsp;N HBO scale, the 1950&nbsp;N cavitation ceiling, bleed and stiction coefficients. These are tuned to produce plausible-looking numbers, not fitted to any dyno.</span></div>
             </div>
             <p><b>Read the shapes and the percentages, not the newtons.</b> The relationships this tool draws &mdash; how a curve bends, how far two oils diverge when cold, how much low speed fades relative to high speed &mdash; are the part worth trusting. The absolute forces are illustrative. No dyno data from any manufacturer was used, and nothing here has been validated against a real damper.</p>
 
             <h4>8 &middot; Known gaps</h4>
-            <p>Seal and bushing friction is folded into a single bath-oil term rather than modelled. There is no negative spring or top-out behaviour. Rebound and compression share one bleed value. Shaft-speed distribution across real terrain is not represented, so the chart shows the whole velocity range equally even though a rider spends most of their time in a narrow band of it. The "bushing oil" list drives the damping curve as an educational stand-in &mdash; on many forks (semi-bath, open-bath, DVO/EXT-style serviceable dampers) that's genuinely the same fluid, but fully sealed cartridge dampers (Fox FIT, RockShox Charger) run their own largely fixed internal fluid instead, closer to 15 cSt @ 40&deg;C regardless of what bushing oil is in the lower legs. One entry, marked with an asterisk, is an estimate rather than a published figure &mdash; see tier 9.</p>
+            <p>Seal and bushing friction is folded into a single bath-oil term rather than modelled. There is no negative spring or top-out behaviour. Rebound and compression share one bleed value. Shaft-speed distribution across real terrain is not represented, so the chart shows the whole velocity range equally even though a rider spends most of their time in a narrow band of it. The "bushing oil" list drives the damping curve as an educational stand-in &mdash; on many forks (semi-bath, open-bath, DVO/EXT-style serviceable dampers) that's genuinely the same fluid, but fully sealed cartridge dampers (Fox FIT, RockShox Charger) run their own largely fixed internal fluid instead, closer to 15 cSt @ 40&deg;C / 104&#8457; regardless of what bushing oil is in the lower legs. One entry, marked with an asterisk, is an estimate rather than a published figure &mdash; see tier 9.</p>
 
             <h4>9 &middot; Oil data provenance</h4>
-            <p>The bath-oil list comes straight off the <b>Motorex SUPERGLISS K technical datasheet</b> (viscosity per DIN 51562-1, VI per DIN ISO 2909, pour point per ASTM D5950): 32K is 33 / 5.8 cSt, VI 118, pour &minus;18&nbsp;&deg;C; 68K is 67 / 8.7, VI 102, pour &minus;21&nbsp;&deg;C; 100K is 103 / 11.3, VI 102. Shockcraft publishes matching temperature windows &mdash; 32K for &minus;10 to 10&nbsp;&deg;C, 68K for 0 to 30&nbsp;&deg;C, 100K for 10 to 40&nbsp;&deg;C &mdash; which is why those ranges appear in the dropdown.</p>
+            <p>The bath-oil list comes straight off the <b>Motorex SUPERGLISS K technical datasheet</b> (viscosity per DIN 51562-1, VI per DIN ISO 2909, pour point per ASTM D5950): 32K is 33 / 5.8 cSt, VI 118, pour &minus;18&nbsp;&deg;C (0&nbsp;&#8457;); 68K is 67 / 8.7, VI 102, pour &minus;21&nbsp;&deg;C (&minus;6&nbsp;&#8457;); 100K is 103 / 11.3, VI 102. Shockcraft publishes matching temperature windows &mdash; 32K for &minus;10 to 10&nbsp;&deg;C (14 to 50&nbsp;&#8457;), 68K for 0 to 30&nbsp;&deg;C (32 to 86&nbsp;&#8457;), 100K for 10 to 40&nbsp;&deg;C (50 to 104&nbsp;&#8457;) &mdash; which is why those ranges appear in the dropdown.</p>
             <p>Worth knowing: Supergliss is a slideway oil, and Motorex explicitly says <b>do not use it in fork dampers</b>. It lubricates bushings. That is exactly why this tool keeps the two lists separate &mdash; the damper list drives the curve, the bath list drives stiction only.</p>
             <p>The cold damper entry, Motorex Racing Fork 2.5wt, uses the post-2016 reformulation figures (14.5 / 4.5 cSt, VI &gt;250) that Motorex confirmed directly to Shockcraft after an earlier published table was found to be wrong. Its VI of 260 is among the highest in the list, which is what lets it stay workable when thicker oils stiffen up.</p>
           </div>
@@ -750,9 +819,9 @@ const OILS = [
 /* Motorex SUPERGLISS K datasheet (DIN 51562-1), ISO VG slideway oils.
    Shockcraft's published temperature windows given alongside. */
 const BATH_OILS = [
-  {n:'Supergliss 32K \u00b7 cold, -10 to 10\u00b0C', v40:33.00,  v100:5.80,  vi:118, pour:-18},
-  {n:'Supergliss 68K \u00b7 all-round, 0 to 30\u00b0C', v40:67.00,  v100:8.70,  vi:102, pour:-21},
-  {n:'Supergliss 100K \u00b7 warm, 10 to 40\u00b0C', v40:103.00, v100:11.30, vi:102, pour:-21},
+  {n:'Supergliss 32K \u00b7 cold, -10 to 10\u00b0C / 14-50\u00b0F', v40:33.00,  v100:5.80,  vi:118, pour:-18},
+  {n:'Supergliss 68K \u00b7 all-round, 0 to 30\u00b0C / 32-86\u00b0F', v40:67.00,  v100:8.70,  vi:102, pour:-21},
+  {n:'Supergliss 100K \u00b7 warm, 10 to 40\u00b0C / 50-104\u00b0F', v40:103.00, v100:11.30, vi:102, pour:-21},
   {n:'Fox 20wt Gold (bath)',                v40:98.90,  v100:13.60, vi:138, pour:-30}
 ];
 const DEFAULT_OIL = 7, DEFAULT_BATH = 0;
@@ -988,9 +1057,9 @@ function drawAmbBar(){
       </linearGradient></defs>`;
   g+=`<rect x="10" y="6" width="${w-20}" height="7" rx="3.5" fill="url(#ambg)" opacity="0.55"/>`;
   g+=`<rect x="${px(60)}" y="4" width="${px(80)-px(60)}" height="11" rx="3" fill="none" stroke="#e7e9ee" stroke-width="1" opacity="0.75"/>`;
-  g+=`<text x="${(px(60)+px(80))/2}" y="24" font-size="7.5" fill="var(--text-dim)" text-anchor="middle" font-family="Space Mono,monospace">NORMAL 60&#8211;80&#8457;</text>`;
-  g+=`<text x="10" y="24" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">-10</text>`;
-  g+=`<text x="${w-10}" y="24" font-size="7.5" fill="var(--text-dim)" text-anchor="end" font-family="Space Mono,monospace">105</text>`;
+  g+=`<text x="${(px(60)+px(80))/2}" y="24" font-size="7.5" fill="var(--text-dim)" text-anchor="middle" font-family="Space Mono,monospace">NORMAL 60&#8211;80&#8457; / 16&#8211;27&#176;C</text>`;
+  g+=`<text x="10" y="24" font-size="7.5" fill="var(--text-dim)" font-family="Space Mono,monospace">-10&#8457;/-23&#176;C</text>`;
+  g+=`<text x="${w-10}" y="24" font-size="7.5" fill="var(--text-dim)" text-anchor="end" font-family="Space Mono,monospace">105&#8457;/41&#176;C</text>`;
   g+=`<polygon points="${px(a)},2 ${px(a)-4},-4 ${px(a)+4},-4" fill="#fff"/>`;
   g+=`<line x1="${px(a)}" y1="2" x2="${px(a)}" y2="16" stroke="#fff" stroke-width="1.6"/>`;
   el.innerHTML=g;
@@ -1024,7 +1093,9 @@ function drawA(){
     const kx=X(c.s.cross,xa,xb,w), ky=Y(compForce(c.s.cross,c.s),ya,yb,h);
     s+=`<circle cx="${kx}" cy="${ky}" r="3" fill="var(--bg)" stroke="${c.color}" stroke-width="1.5"/>`;
   });
-  document.getElementById('chartA').innerHTML=s;
+  const svgA = document.getElementById('chartA');
+  svgA.setAttribute('viewBox','0 0 660 340');
+  svgA.innerHTML=s;
   buildStatsA();
 }
 function buildStatsA(){
@@ -1048,55 +1119,88 @@ function buildStatsA(){
   }).join('');
 }
 
-/* ============ PANEL A - 3D SURFACE (v2: legible pass) ============ */
+/* ============ PANEL A - 3D SURFACE (v3: rotatable, keyed, taller box) ============ */
 /* Axes: X = shaft speed, Y = oil temperature, Z = force. Neutral axis chrome,
    colour reserved for data. Surface uses the same blue->red heat ramp as the
-   run-sweep, so "hot" always means the same thing everywhere in the tool. */
-let mode3d = false, viewAngle = 0, surfaceSide = 'comp';
+   run-sweep, so "hot" always means the same thing everywhere in the tool.
+
+   STILL A WORK IN PROGRESS - see the banner above the chart. The projection is a
+   true azimuth rotation now (was a two-position flip), and the drawing box is
+   taller so nothing falls off the bottom edge, but the surface is still sorted
+   with a naive painter's algorithm. */
+let mode3d = false, surfaceSide = 'comp';
 let hoverPt = null, gridPts = [];
 
 const D3 = {
   VMAX: 800, TMIN: 0, TMAX: 70, FMAX: 2600,
-  ox: 108, oy: 272,
-  ux: 300, uy: 34,
-  wx: 172, wy: -74,
-  zh: 178
+  W: 660, H: 432,        // taller than the 2D panel so axis titles have room
+  cx: 336, cy: 298,      // centre of the floor square, on screen
+  rx: 300,               // width of the floor square before rotation
+  squash: 0.42,          // depth foreshortening
+  zh: 180,               // pixel height of the Z axis
+  az: Math.PI/4          // azimuth in radians - moved by the rotate buttons
 };
+const AZ_HOME = Math.PI/4, AZ_STEP = Math.PI/12;   // 15 degrees per click
 
 function proj(u, wv, z){
-  const d = D3, sign = viewAngle ? -1 : 1;
-  const U = sign>0 ? u : 1-u;
-  return [ d.ox + U*d.ux + wv*d.wx, d.oy + U*d.uy - wv*d.wy - z*d.zh ];
+  const d = D3, ca = Math.cos(d.az), sa = Math.sin(d.az);
+  const X = (u-0.5)*d.rx, Y = (wv-0.5)*d.rx;
+  const sx = X*ca - Y*sa;
+  const sy = (X*sa + Y*ca)*d.squash;
+  return [ d.cx + sx, d.cy - sy - z*d.zh ];
 }
 const nrmF = f => Math.min(Math.max(f,0), D3.FMAX)/D3.FMAX;
 function sideForceFn(){ return surfaceSide==='comp' ? compForce : rebForce; }
 
+/* Unit normal to the segment a->b, pointing away from ref. Used to push tick
+   labels and axis titles clear of the box no matter which way it is spun. */
+function outNormal(a, b, ref){
+  const dx=b[0]-a[0], dy=b[1]-a[1], m=Math.hypot(dx,dy)||1;
+  let nx=-dy/m, ny=dx/m;
+  const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
+  const near=(mx+nx-ref[0])**2+(my+ny-ref[1])**2;
+  const far =(mx-nx-ref[0])**2+(my-ny-ref[1])**2;
+  if(near < far){ nx=-nx; ny=-ny; }
+  return [nx,ny];
+}
+const anchorFor = nx => nx < -0.30 ? 'end' : (nx > 0.30 ? 'start' : 'middle');
+const gline = (a,b,w,op) => `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="var(--line)" stroke-width="${w}" opacity="${op}"/>`;
+
 function drawA3D(){
   const d = D3, base = CFG[editing].s, ff = sideForceFn();
   const NV = 8, NT = 7;                 // aligned to axis ticks: 100mm/s and 10C steps
+  const svgEl = document.getElementById('chartA');
+  svgEl.setAttribute('viewBox', '0 0 ' + d.W + ' ' + d.H);
   let s = '';
 
-  /* ---- walls + floor ---- */
+  /* which two edges of the floor face the camera at this azimuth */
+  const nearW = proj(0.5,1,0)[1] > proj(0.5,0,0)[1] ? 1 : 0;   // temperature edge in front
+  const nearU = proj(1,0.5,0)[1] > proj(0,0.5,0)[1] ? 1 : 0;   // speed edge in front
+  const farW = 1-nearW, farU = 1-nearU;
+  const ref = proj(0.5,0.5,0.5);                               // centre of the box
+
+  /* ---- walls (always the two BACK faces) + floor ---- */
   const AXC = 'var(--silver-dim)';
-  const wallT = [proj(0,0,0), proj(0,1,0), proj(0,1,1), proj(0,0,1)];
-  const wallV = [proj(0,1,0), proj(1,1,0), proj(1,1,1), proj(0,1,1)];
-  s += `<path d="${P(wallV)} Z" fill="var(--panel-2)" stroke="var(--line)" stroke-width="0.8"/>`;
-  s += `<path d="${P(wallT)} Z" fill="var(--panel)" stroke="var(--line)" stroke-width="0.8"/>`;
+  const wallW = [proj(0,farW,0), proj(1,farW,0), proj(1,farW,1), proj(0,farW,1)];
+  const wallU = [proj(farU,0,0), proj(farU,1,0), proj(farU,1,1), proj(farU,0,1)];
+  s += `<path d="${P(wallW)} Z" fill="var(--panel-2)" stroke="var(--line)" stroke-width="0.8"/>`;
+  s += `<path d="${P(wallU)} Z" fill="var(--panel)" stroke="var(--line)" stroke-width="0.8"/>`;
   const floor = [proj(0,0,0), proj(1,0,0), proj(1,1,0), proj(0,1,0)];
   s += `<path d="${P(floor)} Z" fill="var(--recess)" stroke="var(--line)" stroke-width="0.8"/>`;
 
-  /* ---- wall gridlines: force levels (z) and speed lines (x) on the back wall ---- */
+  /* ---- gridlines: force levels up the two back walls, plus a floor grid ---- */
   for(let i=0;i<=4;i++){
     const z=i/4;
-    s += `<line x1="${proj(0,1,z)[0]}" y1="${proj(0,1,z)[1]}" x2="${proj(1,1,z)[0]}" y2="${proj(1,1,z)[1]}" stroke="var(--line)" stroke-width="0.6" opacity="0.6"/>`;
-    s += `<line x1="${proj(0,0,z)[0]}" y1="${proj(0,0,z)[1]}" x2="${proj(0,1,z)[0]}" y2="${proj(0,1,z)[1]}" stroke="var(--line)" stroke-width="0.6" opacity="0.6"/>`;
+    s += gline(proj(0,farW,z), proj(1,farW,z), 0.6, 0.6);
+    s += gline(proj(farU,0,z), proj(farU,1,z), 0.6, 0.6);
   }
   for(let i=0;i<=4;i++){
-    const u=i/4;
-    s += `<line x1="${proj(u,0,0)[0]}" y1="${proj(u,0,0)[1]}" x2="${proj(u,1,0)[0]}" y2="${proj(u,1,0)[1]}" stroke="var(--line)" stroke-width="0.5" opacity="0.4"/>`;
+    const q=i/4;
+    s += gline(proj(q,0,0), proj(q,1,0), 0.5, 0.34);
+    s += gline(proj(0,q,0), proj(1,q,0), 0.5, 0.34);
   }
 
-  /* ---- cavitation plane, clipped so it visibly meets the surface ---- */
+  /* ---- cavitation plane ---- */
   const zc = nrmF(CAV_N);
   const cav = [proj(0,0,zc), proj(1,0,zc), proj(1,1,zc), proj(0,1,zc)];
   s += `<path d="${P(cav)} Z" fill="var(--caution)" fill-opacity="0.09" stroke="var(--caution)" stroke-width="1" stroke-dasharray="5,4" stroke-opacity="0.6"/>`;
@@ -1115,7 +1219,7 @@ function drawA3D(){
     }
   }
 
-  /* ---- intersection contour with the cavitation plane (where the surface crosses it) ---- */
+  /* ---- intersection contour with the cavitation plane ---- */
   let contourPts=[];
   for(let i=0;i<=NV;i++){
     for(let j=0;j<NT;j++){
@@ -1132,7 +1236,7 @@ function drawA3D(){
     s += `<path d="${P(contourPts)}" fill="none" stroke="var(--caution)" stroke-width="1.6" stroke-linecap="round"/>`;
   }
 
-  /* ---- surface quads, painter's algorithm, coloured with the shared heat ramp ---- */
+  /* ---- surface quads, painter's algorithm on the projected floor position ---- */
   const quads=[];
   for(let i=0;i<NV;i++) for(let j=0;j<NT;j++){
     const zs=[grid[i][j],grid[i+1][j],grid[i+1][j+1],grid[i][j+1]];
@@ -1140,9 +1244,10 @@ function drawA3D(){
                proj((i+1)/NV,(j+1)/NT,nrmF(zs[2])), proj(i/NV,(j+1)/NT,nrmF(zs[3]))];
     const hAvg = zs.reduce((a,b)=>a+b,0)/4;
     const isoI = (i%2===0), isoJ = (j%2===0);       // aligns with ticks at 200mm/s & 20C
-    quads.push({depth:(j/NT)-(i/NV), pts, h:nrmF(hAvg), over:hAvg>=CAV_N, iso: isoI||isoJ});
+    const cFloor = proj((i+0.5)/NV, (j+0.5)/NT, 0); // depth cue survives rotation
+    quads.push({depth:cFloor[1], pts, h:nrmF(hAvg), over:hAvg>=CAV_N, iso: isoI||isoJ});
   }
-  quads.sort((a,b)=>b.depth-a.depth);
+  quads.sort((a,b)=>a.depth-b.depth);               // furthest (highest on screen) first
   quads.forEach(q=>{
     const col = heatColor(q.h);
     s += `<path d="${P(q.pts)} Z" fill="${col}" fill-opacity="${q.over?0.5:0.85}" stroke="#0a0d12" stroke-width="${q.iso?0.9:0.35}" stroke-opacity="${q.iso?0.5:0.9}"/>`;
@@ -1172,38 +1277,53 @@ function drawA3D(){
     labelBoxes.forEach(b=>{ if(Math.abs(b-ly)<12) ly = b+12; });
     labelBoxes.push(ly);
     const tag = onSurface ? '' : ' (ref.)';
-    s += `<text x="${e[0]+7}" y="${ly+3}" font-size="9" fill="${c.color}" font-family="Space Mono,monospace">${c.name}${tag} &#183; ${Math.round(t)}&#176;C</text>`;
+    const lx = Math.min(e[0]+7, d.W-8);
+    s += `<text x="${lx}" y="${ly+3}" font-size="9" fill="${c.color}" font-family="Space Mono,monospace" text-anchor="${lx > d.W-90 ? 'end' : 'start'}">${c.name}${tag} &#183; ${Math.round(t)}&#176;C / ${F(t)}&#8457;</text>`;
   });
 
   /* ================= NEUTRAL AXES ================= */
   const axis=(a,b)=>`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="var(--silver)" stroke-width="1.7"/>`;
-  s += axis(proj(0,0,0), proj(1,0,0));
-  s += axis(proj(0,0,0), proj(0,1,0));
-  s += axis(proj(0,0,0), proj(0,0,1));
 
+  /* X - shaft speed, drawn along whichever temperature edge is nearest the camera */
+  const xa0=proj(0,nearW,0), xa1=proj(1,nearW,0);
+  const nX = outNormal(xa0, xa1, ref);
+  s += axis(xa0, xa1);
   [0,200,400,600,800].forEach(v=>{
-    const u=v/d.VMAX, pA=proj(u,0,0), pB=[pA[0]+3, pA[1]+9];
+    const u=v/d.VMAX, pA=proj(u,nearW,0), pB=[pA[0]+nX[0]*8, pA[1]+nX[1]*8];
     s += `<line x1="${pA[0]}" y1="${pA[1]}" x2="${pB[0]}" y2="${pB[1]}" stroke="${AXC}" stroke-width="1"/>`;
-    s += `<text x="${pB[0]+1}" y="${pB[1]+10}" font-size="9.5" fill="var(--text-dim)" text-anchor="middle" font-family="Space Mono,monospace">${v}</text>`;
+    s += `<text x="${pB[0]+nX[0]*9}" y="${pB[1]+nX[1]*9+3.2}" font-size="9.5" fill="var(--text-dim)" text-anchor="${anchorFor(nX[0])}" font-family="Space Mono,monospace">${v}</text>`;
   });
-  const xm=proj(0.5,0,0);
-  s += `<text x="${xm[0]}" y="${xm[1]+40}" font-size="10.5" fill="var(--silver)" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" letter-spacing="1">X &#183; ${surfaceSide==='comp'?'COMPRESSION':'REBOUND'} SPEED (mm/s)</text>`;
+  const xm=proj(0.5,nearW,0);
+  s += `<text x="${xm[0]+nX[0]*40}" y="${xm[1]+nX[1]*40+4}" font-size="10.5" fill="var(--silver)" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" letter-spacing="1">X &#183; ${surfaceSide==='comp'?'COMPRESSION':'REBOUND'} SPEED (mm/s)</text>`;
 
+  /* Y - oil temperature, drawn along whichever speed edge is nearest the camera */
+  const ya0=proj(nearU,0,0), ya1=proj(nearU,1,0);
+  const nY = outNormal(ya0, ya1, ref);
+  s += axis(ya0, ya1);
   [0,20,40,60,70].forEach(t=>{
-    const wv=(t-d.TMIN)/(d.TMAX-d.TMIN), pA=proj(0,wv,0), pB=[pA[0]-9, pA[1]+3];
+    const wv=(t-d.TMIN)/(d.TMAX-d.TMIN), pA=proj(nearU,wv,0), pB=[pA[0]+nY[0]*8, pA[1]+nY[1]*8];
     s += `<line x1="${pA[0]}" y1="${pA[1]}" x2="${pB[0]}" y2="${pB[1]}" stroke="${AXC}" stroke-width="1"/>`;
-    s += `<text x="${pB[0]-3}" y="${pB[1]+3}" font-size="9.5" fill="var(--text-dim)" text-anchor="end" font-family="Space Mono,monospace">${t}&#176;/${F(t)}&#8457;</text>`;
+    s += `<text x="${pB[0]+nY[0]*9}" y="${pB[1]+nY[1]*9+3.2}" font-size="9.5" fill="var(--text-dim)" text-anchor="${anchorFor(nY[0])}" font-family="Space Mono,monospace">${t}&#176;C/${F(t)}&#8457;</text>`;
   });
-  const ym=proj(0,0.5,0);
-  s += `<text x="${ym[0]-34}" y="${ym[1]+40}" font-size="10.5" fill="var(--silver)" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" letter-spacing="1">Y &#183; OIL TEMPERATURE</text>`;
+  const ym=proj(nearU,0.5,0);
+  s += `<text x="${ym[0]+nY[0]*52}" y="${ym[1]+nY[1]*52+4}" font-size="10.5" fill="var(--silver)" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" letter-spacing="1">Y &#183; OIL TEMPERATURE</text>`;
 
+  /* Z - force, on the left-most vertical corner so it stays clear of the sheet */
+  let zCorner=[0,0], bestX=Infinity;
+  [[0,0],[1,0],[0,1],[1,1]].forEach(c=>{ const px=proj(c[0],c[1],0)[0]; if(px<bestX){bestX=px; zCorner=c;} });
+  const za0=proj(zCorner[0],zCorner[1],0), za1=proj(zCorner[0],zCorner[1],1);
+  const nZ = outNormal(za0, za1, ref);
+  s += axis(za0, za1);
   [0,650,1300,1950,2600].forEach(fv=>{
-    const z=fv/d.FMAX, pA=proj(0,0,z), pB=[pA[0]-7, pA[1]];
+    const z=fv/d.FMAX, pA=proj(zCorner[0],zCorner[1],z), pB=[pA[0]+nZ[0]*7, pA[1]+nZ[1]*7];
     s += `<line x1="${pA[0]}" y1="${pA[1]}" x2="${pB[0]}" y2="${pB[1]}" stroke="${AXC}" stroke-width="1"/>`;
-    s += `<text x="${pB[0]-3}" y="${pB[1]+3}" font-size="9.5" fill="var(--text-dim)" text-anchor="end" font-family="Space Mono,monospace">${fv}${fv===1950?' \\u26A0':''}</text>`;
+    s += `<text x="${pB[0]+nZ[0]*4}" y="${pB[1]+3}" font-size="9.5" fill="${fv===1950?'var(--caution)':'var(--text-dim)'}" text-anchor="${anchorFor(nZ[0])}" font-family="Space Mono,monospace">${fv}${fv===1950?' \u26A0':''}</text>`;
   });
-  const zm=proj(0,0,1);
-  s += `<text x="${zm[0]-8}" y="${zm[1]-14}" font-size="10.5" fill="var(--silver)" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" letter-spacing="1">Z &#183; FORCE (N)</text>`;
+  s += `<text x="${za1[0]+nZ[0]*6}" y="${za1[1]-14}" font-size="10.5" fill="var(--silver)" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" letter-spacing="1">Z &#183; FORCE (N)</text>`;
+
+  /* ---- viewing-angle readout, so the rotate buttons have a reference ---- */
+  const deg = ((Math.round(d.az*180/Math.PI) % 360) + 360) % 360;
+  s += `<text x="${d.W-6}" y="14" font-size="9" fill="var(--text-dim)" text-anchor="end" font-family="Space Mono,monospace">VIEW ${deg}&#176;${Math.abs(d.az-AZ_HOME)<1e-6?' (HOME)':''}</text>`;
 
   /* ---- crosshair / hover-tap readout ---- */
   if(hoverPt){
@@ -1215,13 +1335,13 @@ function drawA3D(){
     s += `<line x1="${pp[0]}" y1="${pp[1]}" x2="${floorP[0]}" y2="${floorP[1]}" stroke="#fff" stroke-width="1" stroke-dasharray="2,3" opacity="0.6"/>`;
     s += `<circle cx="${pp[0]}" cy="${pp[1]}" r="4.5" fill="none" stroke="#fff" stroke-width="1.6"/>`;
     s += `<circle cx="${pp[0]}" cy="${pp[1]}" r="2" fill="#fff"/>`;
-    const boxW=138, bx=Math.min(Math.max(pp[0]-boxW/2,4), 660-boxW-4), by=Math.max(pp[1]-46,4);
+    const boxW=168, bx=Math.min(Math.max(pp[0]-boxW/2,4), d.W-boxW-4), by=Math.max(pp[1]-46,4);
     s += `<rect x="${bx}" y="${by}" width="${boxW}" height="34" rx="6" fill="#0a0d12" stroke="#fff" stroke-opacity="0.35"/>`;
-    s += `<text x="${bx+8}" y="${by+14}" font-size="9.5" fill="#fff" font-family="Space Mono,monospace">${p.v} mm/s &#183; ${p.t}&#176;C</text>`;
+    s += `<text x="${bx+8}" y="${by+14}" font-size="9.5" fill="#fff" font-family="Space Mono,monospace">${p.v} mm/s &#183; ${p.t}&#176;C / ${F(p.t)}&#8457;</text>`;
     s += `<text x="${bx+8}" y="${by+27}" font-size="10.5" fill="#F0C766" font-family="Space Mono,monospace" font-weight="700">${Math.round(fv)} N</text>`;
   }
 
-  document.getElementById('chartA').innerHTML = s;
+  svgEl.innerHTML = s;
   buildStatsA();
   updateLegend3D();
 }
@@ -1441,6 +1561,7 @@ btn2d.addEventListener('click',()=>{
   mode3d=false; hoverPt=null;
   btn2d.classList.add('active'); btn3d.classList.remove('active');
   controls3d.classList.remove('on'); chartAWrap.classList.remove('deep');
+  wipNote.style.display='none'; axisKey.style.display='none';
   panelASub.textContent='Rebound plotted left of zero as positive force, the same convention as a dyno printout. Line style tells you which setup.';
   render();
 });
@@ -1448,10 +1569,13 @@ btn3d.addEventListener('click',()=>{
   mode3d=true;
   btn3d.classList.add('active'); btn2d.classList.remove('active');
   controls3d.classList.add('on'); chartAWrap.classList.add('deep');
-  panelASub.textContent='Force as a surface over shaft speed and oil temperature. Drag or tap the surface to read exact values. The dashed line marks where it crosses the cavitation ceiling.';
+  wipNote.style.display='block'; axisKey.style.display='grid';
+  panelASub.textContent='Force as a surface over shaft speed and oil temperature. Drag or tap the surface to read exact values. The dashed line marks where it crosses the cavitation ceiling. Spin the box with the arrows to read a face that is hiding.';
   render();
 });
-btnRot.addEventListener('click',()=>{ viewAngle=viewAngle?0:1; drawA3D(); });
+btnRotCCW.addEventListener('click',()=>{ D3.az -= AZ_STEP; hoverPt=null; drawA3D(); });
+btnRotCW .addEventListener('click',()=>{ D3.az += AZ_STEP; hoverPt=null; drawA3D(); });
+btnRotReset.addEventListener('click',()=>{ D3.az = AZ_HOME; hoverPt=null; drawA3D(); });
 btnComp.addEventListener('click',()=>{ surfaceSide='comp'; btnComp.classList.add('active'); btnReb.classList.remove('active'); drawA3D(); });
 btnReb.addEventListener('click',()=>{ surfaceSide='reb'; btnReb.classList.add('active'); btnComp.classList.remove('active'); drawA3D(); });
 
@@ -1468,15 +1592,11 @@ copyBaseline.addEventListener('click',()=>{
   CFG[editing].s={...CFG[0].s}; CFG[editing].on=true; syncUI(); render();});
 
 /* ============ THEME ============ */
-let bgOn = false;
+/* The caribou pattern is now a permanent part of the hero band in both themes.
+   These buttons only swap the colour palette. */
 document.querySelectorAll('[data-theme-btn]').forEach(b=>{
   b.addEventListener('click', ()=>{
-    const t = b.dataset.themeBtn;
-    const alreadyActive = document.documentElement.getAttribute('data-theme') === t;
-    bgOn = alreadyActive ? !bgOn : true;   // switching themes always turns the pattern on;
-                                            // clicking the theme already active toggles it
-    document.documentElement.setAttribute('data-theme', t);
-    document.getElementById('heroBand').classList.toggle('bg-pattern', bgOn);
+    document.documentElement.setAttribute('data-theme', b.dataset.themeBtn);
     document.querySelectorAll('[data-theme-btn]').forEach(x=>x.classList.toggle('active', x===b));
   });
 });
@@ -1605,7 +1725,7 @@ function buildConversation(){
     const o = OILS[s.oil], ob = OILS[bs.oil];
     const nu = nuOf(s), nub = nuOf(bs);
     if(s.oil!==bs.oil || oilTemp(s)!==oilTemp(bs)){
-      h += 'Running <b>' + o.n + '</b> at ' + fmtTemp(oilTemp(s)) + ' oil temp (ambient ' + s.ambF + ' \u00B0F, +' + Math.round(s.soak) + ' \u00B0C soak), the fluid measures <b>' + nu.toFixed(1) +
+      h += 'Running <b>' + o.n + '</b> at ' + fmtTemp(oilTemp(s)) + ' oil temp (ambient ' + s.ambF + ' \u00B0F / ' + Math.round(C(s.ambF)) + ' \u00B0C, plus ' + Math.round(s.soak) + ' \u00B0C / ' + Math.round(s.soak*9/5) + ' \u00B0F of soak), the fluid measures <b>' + nu.toFixed(1) +
            ' cSt</b> against the baseline\u2019s ' + nub.toFixed(1) + ' cSt — ' +
            (nu<nub ? 'roughly ' + (nub/nu).toFixed(1) + '\u00D7 thinner. ' :
             nu>nub ? 'roughly ' + (nu/nub).toFixed(1) + '\u00D7 thicker. ' : 'effectively the same. ');
@@ -1669,8 +1789,8 @@ function buildConversation(){
   if(runSweep){
     const sw=sweepConfigs(), o=OILS[CFG[editing].s.oil];
     h += '<h4>Five runs on ' + o.n + '</h4><p>';
-    h += 'Starting from ' + CFG[editing].name + ' at ' + cur().ambF + ' \u00B0F ambient, each run soaks more heat into the damper and the next one starts warmer. ';
-    h += sw.map(r=>'Run ' + r.n + ' at ' + Math.round(oilTemp(r.s)) + ' \u00B0C gives ' + Math.round(compForce(100,r.s)) + ' N low-speed').join('; ') + '. ';
+    h += 'Starting from ' + CFG[editing].name + ' at ' + cur().ambF + ' \u00B0F / ' + Math.round(C(cur().ambF)) + ' \u00B0C ambient, each run soaks more heat into the damper and the next one starts warmer. ';
+    h += sw.map(r=>'Run ' + r.n + ' at ' + fmtTemp(oilTemp(r.s)) + ' gives ' + Math.round(compForce(100,r.s)) + ' N low-speed').join('; ') + '. ';
     const d1=compForce(100,sw[0].s), d5=compForce(100,sw[4].s);
     h += 'That is a <b>' + say(pct(d5,d1)) + '</b> change in low-speed compression across the day, with nobody touching a dial. ';
     h += 'High speed only moves ' + say(pct(compForce(600,sw[4].s), compForce(600,sw[0].s))) + ' over the same span — heat robs support long before it robs big-hit control, which is why a tired fork feels vague rather than soft. ';
@@ -1727,7 +1847,7 @@ function buildELI(){
 
   if(runSweep){
     const sw = sweepConfigs();
-    h += '<h5>That stack of coloured lines</h5><p>Blue is run one, red is run five. They are all the <b>same fork with the same settings</b> — nobody touched a dial. The only thing that changed is the oil got hotter each run, from ' + Math.round(oilTemp(sw[0].s)) + ' \u00B0C up to ' + Math.round(oilTemp(sw[4].s)) + ' \u00B0C. That fan of lines spreading downward <em>is</em> the fade, drawn out.</p>';
+    h += '<h5>That stack of coloured lines</h5><p>Blue is run one, red is run five. They are all the <b>same fork with the same settings</b> — nobody touched a dial. The only thing that changed is the oil got hotter each run, from ' + fmtTemp(oilTemp(sw[0].s)) + ' up to ' + fmtTemp(oilTemp(sw[4].s)) + '. That fan of lines spreading downward <em>is</em> the fade, drawn out.</p>';
     h += '<p>Notice they spread wide near the middle of the chart and squeeze back together out at the edges. Heat steals the fork\u2019s slow-speed support long before it touches its ability to handle big hits. That is why a fork four runs into a bike park day feels vague and wallowy rather than obviously soft — and it happens on both the compression and the rebound side at once, so the fork gets loose going in <em>and</em> coming back out.</p>';
   }
 
@@ -1743,6 +1863,161 @@ document.querySelectorAll('.mini-toggle').forEach(b=>b.addEventListener('click',
 /* ============ RUN SWEEP - own dedicated chart ============ */
 const LAP_NAMES = ['First Lap','Lap 2','Warming Up','Getting Hot','Last Run'];
 
+
+/* ---- Commentary that sits under the 5-run chart. Rebuilt on every draw so the
+   numbers always describe the five runs actually on screen. ---- */
+function buildRunsCommentary(){
+  const el = document.getElementById('runsCommentary');
+  if(!el) return;
+  if(!runSweep){ el.innerHTML=''; el.style.display='none'; return; }
+  el.style.display='block';
+
+  const c  = CFG[editing], s = c.s;
+  const o  = OILS[s.oil], bo = BATH_OILS[s.bath];
+  const sw = sweepConfigs();
+
+  const ambF = Math.round(s.ambF), ambC = Math.round(C(s.ambF));
+  const t1 = oilTemp(sw[0].s), t5 = oilTemp(sw[4].s);
+  const rise  = t5 - t1;
+  const step1 = oilTemp(sw[1].s) - t1;               // heat added between run 1 and 2
+  const step5 = t5 - oilTemp(sw[3].s);               // heat added between run 4 and 5
+
+  const nu1 = nuOf(sw[0].s), nu5 = nuOf(sw[4].s);
+  const lsc1 = compForce(100, sw[0].s), lsc5 = compForce(100, sw[4].s);
+  const msc1 = compForce(300, sw[0].s), msc5 = compForce(300, sw[4].s);
+  const hsc1 = compForce(700, sw[0].s), hsc5 = compForce(700, sw[4].s);
+  const lsr1 = rebForce(100,  sw[0].s), lsr5 = rebForce(100,  sw[4].s);
+  const pk1  = compForce(800, sw[0].s), pk5  = compForce(800, sw[4].s);
+
+  /* air-spring counter-effect, ideal gas, absolute temperature */
+  const psiHot = s.psi * (273.15 + t5) / (273.15 + t1);
+
+  let h = '';
+
+  /* ---------- 1. ambient, up front ---------- */
+  h += '<div class="rc-amb"><b>Ambient air: ' + ambF + ' &#8457; / ' + ambC + ' &#176;C.</b> '
+    + 'That is the floor underneath all five runs. Heat soak only ever stacks <em>on top</em> of ambient, and '
+    + 'between laps the fork can shed back down toward it but never past it. Run this same fork on a day '
+    + '25 &#8457; warmer and it is a measurably different fork by the third lap, with the clickers untouched. '
+    + 'Move the Ambient slider and the entire fan below shifts with it.</div>';
+
+  /* ---------- 2. the five runs, as a table ---------- */
+  h += '<h5>The five runs, one row each</h5>';
+  h += '<table class="rc-table"><thead><tr>'
+    + '<th>Run</th><th>Oil temp</th><th>Viscosity</th><th>Comp @100</th><th>vs. run 1</th>'
+    + '</tr></thead><tbody>';
+  sw.forEach(r=>{
+    const col = heatColor((r.n-1)/4);
+    const f = compForce(100, r.s);
+    const dl = r.n===1 ? '&mdash;' : say(pct(f, lsc1));
+    h += '<tr><td><span class="sw" style="background:' + col + '"></span>' + LAP_NAMES[r.n-1] + '</td>'
+      + '<td>' + Math.round(oilTemp(r.s)) + '&#176;C / ' + F(oilTemp(r.s)) + '&#8457;</td>'
+      + '<td>' + nuOf(r.s).toFixed(1) + ' cSt</td>'
+      + '<td>' + Math.round(f) + ' N</td>'
+      + '<td>' + dl + '</td></tr>';
+  });
+  h += '</tbody></table>';
+
+  /* ---------- 3. what is actually heating up ---------- */
+  h += '<h5>What is getting hot, and why</h5>';
+  h += '<p>A damper is an energy converter with one output: heat. Every bump the fork absorbs is kinetic '
+    + 'energy forced through small orifices and turned into warm oil. Nothing else happens to it. On a long '
+    + 'descent the fork is doing that hundreds of times a minute, and the aluminium around it cannot shed the '
+    + 'heat as fast as the rider makes it &mdash; so it accumulates. Across these five runs the fluid climbs from <b>'
+    + Math.round(t1) + '&#176;C / ' + F(t1) + '&#8457;</b> to <b>' + Math.round(t5) + '&#176;C / ' + F(t5)
+    + '&#8457;</b>, a gain of <b>' + Math.round(rise) + ' &#176;C / ' + Math.round(rise*9/5) + ' &#8457;</b>.</p>';
+  h += '<p>Notice the gain is front-loaded. Run 1 to run 2 adds about <b>' + step1.toFixed(1) + ' &#176;C</b>; '
+    + 'run 4 to run 5 adds only <b>' + step5.toFixed(1) + ' &#176;C</b>. The fork is approaching the temperature '
+    + 'where the heat it makes and the heat it sheds balance out. Most of the change a rider notices across a '
+    + 'bike park day has already happened by the second or third lap &mdash; which is exactly why the runs that '
+    + '<em>feel</em> the most different are the early ones, and why a mid-day setup change made on lap four is '
+    + 'being made on a fork that has nearly stopped moving.</p>';
+
+  /* ---------- 4. what the heat does to the oil ---------- */
+  h += '<h5>What that does to the fluid</h5>';
+  h += '<p>You are running <b>' + o.n + '</b>, viscosity index <b>' + o.vi + '</b>. Over those five runs its '
+    + 'thickness falls from <b>' + nu1.toFixed(1) + ' cSt</b> to <b>' + nu5.toFixed(1) + ' cSt</b> ('
+    + say(pct(nu5, nu1)) + '). The clickers never moved. The shim stacks never moved. The only thing that '
+    + 'changed is that the fluid being pushed through them got easier to push. ';
+  h += (o.vi >= 220
+      ? 'At a VI of ' + o.vi + ' this is an unusually stubborn oil &mdash; a low-VI 10wt in the same fork would '
+        + 'lose noticeably more over the same five laps.'
+      : o.vi >= 150
+      ? 'A VI of ' + o.vi + ' is middling. A high-VI fluid would flatten a good part of that spread without '
+        + 'changing a single click.'
+      : 'A VI of ' + o.vi + ' is at the soft end. This is close to the worst case for fade; a high-VI fluid '
+        + 'would cut the spread substantially.') + '</p>';
+
+  /* ---------- 5. where the loss lands ---------- */
+  h += '<h5>Where the loss lands &mdash; and where it does not</h5>';
+  h += '<p>The fade is not spread evenly across the curve. Between run 1 and run 5:</p>';
+  h += '<p><b>Low speed (100 mm/s)</b> &mdash; ' + Math.round(lsc1) + ' N down to ' + Math.round(lsc5)
+    + ' N, <b>' + say(pct(lsc5, lsc1)) + '</b>. This is brake dive, pumping, weighting the front in a flat corner. '
+    + 'It is where most of the loss goes.<br>'
+    + '<b>Mid speed (300 mm/s)</b> &mdash; ' + Math.round(msc1) + ' N to ' + Math.round(msc5) + ' N, '
+    + say(pct(msc5, msc1)) + '.<br>'
+    + '<b>High speed (700 mm/s)</b> &mdash; ' + Math.round(hsc1) + ' N to ' + Math.round(hsc5) + ' N, only '
+    + say(pct(hsc5, hsc1)) + '. Square edges and hard landings barely notice.<br>'
+    + '<b>Rebound (100 mm/s)</b> &mdash; ' + Math.round(lsr1) + ' N to ' + Math.round(lsr5) + ' N, '
+    + say(pct(lsr5, lsr1)) + '.</p>';
+  h += '<p>The reason is where the oil is going. At low shaft speeds the flow is through a small fixed bleed '
+    + 'orifice, close to laminar, and force tracks viscosity almost one-for-one. At high speeds the shims are '
+    + 'blown open, flow is turbulent through a much larger area, and viscosity barely matters &mdash; inertia does. '
+    + 'So heat guts the part of the damper the rider leans on constantly and leaves the part that only fires a '
+    + 'few times per run nearly intact.</p>';
+  h += '<p>And because compression and rebound both lose low-speed support at the same time, a heat-soaked fork '
+    + 'does not read as "too soft." It reads as <em>vague</em>. Loose going in and loose coming back out, riding '
+    + 'lower in its travel, steepening the head angle a degree or so, arriving at the bottom-out zone earlier '
+    + 'than it did on lap one. Most riders diagnose that as being tired. Some of it is the fork.</p>';
+
+  /* ---------- 6. cavitation margin ---------- */
+  h += '<h5>The cavitation ceiling</h5>';
+  if(pk1 >= CAV_N && pk5 >= CAV_N){
+    h += '<p>Peak compression stays above the ' + CAV_N + ' N ceiling on every one of the five runs ('
+      + Math.round(pk1) + ' N cold, ' + Math.round(pk5) + ' N hot). The far right of the chart is a warning '
+      + 'band, not a measurement, on all five &mdash; heat does not rescue you from it here.</p>';
+  } else if(pk1 >= CAV_N){
+    h += '<p>Peak compression starts above the ' + CAV_N + ' N ceiling (' + Math.round(pk1)
+      + ' N on run 1) and drops under it by run 5 (' + Math.round(pk5) + ' N). That is the one thing heat '
+      + 'arguably gives back: a cold, thick fork is closer to running out of oil supply on a big hit. It is a '
+      + 'thin consolation for everything else it takes.</p>';
+  } else {
+    h += '<p>Peak compression stays under the ' + CAV_N + ' N ceiling on all five runs (' + Math.round(pk1)
+      + ' N cold, ' + Math.round(pk5) + ' N hot), so cavitation is not the limiting factor here. The story is '
+      + 'entirely about low-speed support draining away.</p>';
+  }
+
+  /* ---------- 7. the counter-effect nobody models ---------- */
+  h += '<h5>The part that pushes back the other way</h5>';
+  h += '<p>Heat does not only soften things. The air spring is a sealed gas volume, so the same heat raises its '
+    + 'pressure &mdash; roughly 3 to 4 % for every 10 &#176;C. Your ' + s.psi + ' psi would read closer to <b>'
+    + Math.round(psiHot) + ' psi</b> by run 5 if the chamber tracked the damper temperature exactly (it does '
+    + 'not; it lags and it sits further from the heat source). So a hot fork is a little <em>stiffer</em> in '
+    + 'spring while being clearly <em>softer</em> in damping. Those are two different systems moving in opposite '
+    + 'directions, and it is part of why heat fade is hard to describe: it does not feel like "the fork got '
+    + 'soft," it feels like the fork stopped controlling itself. <b>This effect is not in the model</b> &mdash; '
+    + 'Panel B still draws the spring curve at the pressure you set.</p>';
+
+  /* ---------- 8. bath oil / friction ---------- */
+  h += '<p>Bushing friction moves too. On <b>' + bo.n.split(' \u00b7 ')[0] + '</b> the breakaway force falls from about <b>'
+    + Math.round(stiction(sw[0].s)) + ' N</b> cold to <b>' + Math.round(stiction(sw[4].s)) + ' N</b> hot. '
+    + 'A warm fork is a smoother fork off the top &mdash; the one honest improvement on this list, and the reason '
+    + 'a first run down often feels harsh in a way that has nothing to do with the damper.</p>';
+
+  /* ---------- 9. the honest caveat ---------- */
+  h += '<div class="rc-caveat"><b>WHAT THIS SIMULATION IS NOT</b><br>'
+    + 'The heat curve here is <em>soak(n) = 40 &#183; (1 &minus; e<sup>&minus;n/2</sup>)</em>: a 40 &#176;C ceiling '
+    + 'and a two-run time constant. Both are picked, not measured. Real heat build depends on descent length, '
+    + 'rider weight, terrain roughness, brake drag, lower-leg airflow, whether you shuttled or pedalled back up, '
+    + 'and how long you stood in the lift line. A 90-second bike park lap on a chairlift and a twenty-minute '
+    + 'alpine descent are not the same five runs. '
+    + 'Also absent: air-spring pressure rise (above), seal swell, oil aeration after repeated cycling, and any '
+    + 'heat in the brakes, tyres or rider. Read the <em>shape</em> of the fade and the <em>percentages</em> &mdash; '
+    + 'the newtons are illustrative.</div>';
+
+  el.innerHTML = h;
+}
+
 let runsGen = 0, renderSkipRuns = false;
 function drawRunsChart(animate){
   const svg = document.getElementById('chartRuns');
@@ -1753,6 +2028,7 @@ function drawRunsChart(animate){
   if(!runSweep){
     svg.innerHTML = '';
     legend.innerHTML = '';
+    buildRunsCommentary();
     return;
   }
 
@@ -1780,7 +2056,7 @@ function drawRunsChart(animate){
     paths += `<g id="runGroup${r.n}" style="opacity:0; transition:opacity .5s ease;">
       <path d="${P(cp)}" fill="none" stroke="${col}" stroke-width="2" opacity="0.95"/>
       <path d="${P(rp)}" fill="none" stroke="${col}" stroke-width="2" opacity="0.72"/>
-      <text x="${e[0]-4}" y="${e[1]-6}" font-size="9" fill="${col}" text-anchor="end" font-family="Space Mono,monospace">${LAP_NAMES[r.n-1]} &#183; ${Math.round(oilTemp(r.s))}&#176;C</text>
+      <text x="${e[0]-4}" y="${e[1]-6}" font-size="9" fill="${col}" text-anchor="end" font-family="Space Mono,monospace">${LAP_NAMES[r.n-1]} &#183; ${Math.round(oilTemp(r.s))}&#176;C/${F(oilTemp(r.s))}&#8457;</text>
     </g>`;
   });
 
@@ -1788,8 +2064,10 @@ function drawRunsChart(animate){
 
   legend.innerHTML = sw.map(r=>{
     const col = heatColor((r.n-1)/4);
-    return `<div class="rl" id="runLeg${r.n}"><i style="background:${col}"></i>${LAP_NAMES[r.n-1]} &middot; ${Math.round(oilTemp(r.s))}&deg;C</div>`;
+    return `<div class="rl" id="runLeg${r.n}"><i style="background:${col}"></i>${LAP_NAMES[r.n-1]} &middot; ${Math.round(oilTemp(r.s))}&deg;C / ${F(oilTemp(r.s))}&#8457;</div>`;
   }).join('');
+
+  buildRunsCommentary();
 
   if(!animate){
     sw.forEach(r=>{
