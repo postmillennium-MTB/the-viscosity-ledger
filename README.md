@@ -28,11 +28,29 @@ This tool exists to make that difference visible.
 - **Damping circuit controls** the clickers can't reach: free bleed, compression crossover,
   independent rebound crossover, cavitation ceiling
 - **Negative tokens** down to −1.5 (Noken-style high-volume air cap), flattening the spring curve
-- **Simulate 5 runs** — progressive heat build across a day, drawn as a fan of curves
-- **3D surface** — compression force over shaft speed × oil temperature, with a cavitation plane
+- **Simulate 5 runs** — progressive heat build across a day, drawn as a fan of curves, with a
+per-run commentary underneath that reads the ambient temperature first and then works through
+what the heat did to that specific set of five laps
+- **3D surface** *(work in progress)* — compression or rebound force over shaft speed × oil
+temperature, with a cavitation plane, a rotatable view and an X/Y/Z key
 - **Conversation panel** — plain-prose comparison of the active setups, with an
   "explain it like I'm 15" version underneath
 - **Under the Hood panel** — every formula, with confidence tiering
+- **Dual units everywhere** — every temperature in the tool is given in both °C and °F
+
+---
+
+## The 3D surface — status
+
+The 3D panel is explicitly a work in progress and says so on screen.
+
+What works: a true azimuth rotation (⟲ / ⟳ in 15° steps, plus RESET), axis placement that follows
+the rotation so tick labels always sit outside the box, an X/Y/Z key above the chart, and tap-to-read
+values off the surface.
+
+What doesn't yet: the surface is depth-sorted with a painter's algorithm on quad centroids, which
+can mis-layer where the sheet folds back on itself. Fixing it properly means sorting triangles rather
+than quads. Read the 3D panel as a shape; the 2D panel is the trustworthy view.
 
 ---
 
@@ -135,6 +153,13 @@ No dyno data from any manufacturer was used. Nothing here has been validated aga
 - Shaft-speed distribution across real terrain isn't represented, so the chart weights the whole
   velocity range equally even though a rider spends most of their time in a narrow band of it
 - `n` (shim stack character) is hardcoded digressive and not adjustable
+- **Air-spring pressure rise with heat is not modelled.** A sealed gas volume gains roughly 3–4 %
+pressure per 10 °C, so a hot fork is slightly *stiffer* in spring while being clearly *softer* in
+damping. The two effects fight each other and only one of them is on the chart. The 5-run commentary
+calls this out and estimates the pressure, but Panel B still draws the spring at the pressure you set
+- Also absent: seal swell, oil aeration after repeated cycling, and heat anywhere outside the fork
+- The heat-soak curve's 40 °C ceiling and two-run time constant are picked, not measured. A
+90-second lift lap and a twenty-minute alpine descent are not the same five runs
 
 ## Corrections made during development
 
