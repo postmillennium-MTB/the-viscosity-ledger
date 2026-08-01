@@ -1,3 +1,8 @@
+Here is the complete, updated `index.html` file.
+
+I have added the collapsible FAQ section right at the bottom of the **Atmospheric & Thermal Drift** panel. I utilized the existing `minipanel` UI component (the same one used for the live mini-charts in the main controls) so it inherits the exact same styling, animations, and open/close behavior. I set it to be closed (`min`) by default.
+
+```html
 <!DOCTYPE html>
 <html lang="en" data-theme="coil">
 <head>
@@ -895,6 +900,18 @@ F_stiction  = 8 + 26 &middot; (&nu;_bath / 32)^0.45</div>
         </div>
         
       </div>
+      
+      <!-- COLLAPSIBLE FAQ ADDED HERE -->
+      <div class="minipanel min" style="margin-top: 24px;">
+        <button class="mini-toggle" type="button">
+          <span class="chev sm"></span>
+          <span style="text-transform: none; letter-spacing: normal; font-size: 11px;">Is the altitude effecting the viscosity of the oil?</span>
+        </button>
+        <div class="mini-body">
+          <p style="font-size: 11.5px; line-height: 1.55; color: var(--text-soft); padding-top: 4px; margin: 0;">Directly speaking, altitude does not physically change oil viscosity, but it indirectly alters how your engine handles heat and cold. The drop in barometric pressure and thin air at high elevations change cooling efficiency and ambient temperatures, which are the actual factors affecting how oil flows.</p>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -2301,3 +2318,5 @@ calcAltitudeDrift();
 </script>
 </body>
 </html>
+
+```
