@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" data-theme="coil">
 <head>
@@ -58,7 +59,6 @@
     border-bottom:1px solid var(--haze);
     padding:22px 24px 24px;
   }
-  /* Caribou pattern is permanent in BOTH themes now - no longer toggled on/off. */
   .hero-pattern{
     position:absolute; inset:0; z-index:0; pointer-events:none;
     background-image:url('pmr-caribou-pattern.png');
@@ -838,7 +838,7 @@ F_stiction  = 8 + 26 &middot; (&nu;_bath / 32)^0.45</div>
           <div class="row">
             <label>Start Temp</label>
             <input type="range" id="altStartTemp" min="10" max="110" step="1" value="70">
-            <span class="val-chip" id="altStartTempVal" style="min-width:74px">70 &deg;F</span>
+            <span class="val-chip" id="altStartTempVal" style="min-width:110px">70 &deg;F (21 &deg;C)</span>
           </div>
           <p class="hint">Set these to match the conditions where you are actually filling the air (e.g., your warm garage or base area hotel).</p>
         </div>
@@ -855,8 +855,8 @@ F_stiction  = 8 + 26 &middot; (&nu;_bath / 32)^0.45</div>
 
           <div class="row">
             <label>Target Temp</label>
-            <input type="range" id="altTargetTemp" min="10" max="110" step="1" value="45">
-            <span class="val-chip" id="altTargetTempVal" style="min-width:74px">45 &deg;F</span>
+            <input type="range" id="altTargetTemp" min="10" max="110" step="1" value="60">
+            <span class="val-chip" id="altTargetTempVal" style="min-width:110px">60 &deg;F (16 &deg;C)</span>
           </div>
           
           <table class="rc-table" style="margin-top:20px;">
@@ -903,7 +903,7 @@ F_stiction  = 8 + 26 &middot; (&nu;_bath / 32)^0.45</div>
           <span style="text-transform: none; letter-spacing: normal; font-size: 11px;">Is the altitude effecting the viscosity of the oil?</span>
         </button>
         <div class="mini-body">
-          <p style="font-size: 11.5px; line-height: 1.55; color: var(--text-soft); padding-top: 4px; margin: 0;">Directly speaking, altitude does not physically change oil viscosity, but it indirectly alters how your engine handles heat and cold. The drop in barometric pressure and thin air at high elevations change cooling efficiency and ambient temperatures, which are the actual factors affecting how oil flows.</p>
+          <p style="font-size: 11.5px; line-height: 1.55; color: var(--text-soft); padding-top: 4px; margin: 0;">Directly speaking, altitude does not physically change oil viscosity, but indirectly: the drop in barometric pressure and thin air at high elevations change cooling efficiency and ambient temperatures, which are the actual factors affecting how oil flows.</p>
         </div>
       </div>
 
@@ -1244,27 +1244,19 @@ function buildStatsA(){
 }
 
 /* ============ PANEL A - 3D SURFACE (v3: rotatable, keyed, taller box) ============ */
-/* Axes: X = shaft speed, Y = oil temperature, Z = force. Neutral axis chrome,
-   colour reserved for data. Surface uses the same blue->red heat ramp as the
-   run-sweep, so "hot" always means the same thing everywhere in the tool.
-
-   STILL A WORK IN PROGRESS - see the banner above the chart. The projection is a
-   true azimuth rotation now (was a two-position flip), and the drawing box is
-   taller so nothing falls off the bottom edge, but the surface is still sorted
-   with a naive painter's algorithm. */
 let mode3d = false, surfaceSide = 'comp';
 let hoverPt = null, gridPts = [];
 
 const D3 = {
   VMAX: 800, TMIN: 0, TMAX: 70, FMAX: 2600,
-  W: 660, H: 432,        // taller than the 2D panel so axis titles have room
-  cx: 336, cy: 298,      // centre of the floor square, on screen
-  rx: 300,               // width of the floor square before rotation
-  squash: 0.42,          // depth foreshortening
-  zh: 180,               // pixel height of the Z axis
-  az: Math.PI/4          // azimuth in radians - moved by the rotate buttons
+  W: 660, H: 432,
+  cx: 336, cy: 298,
+  rx: 300,
+  squash: 0.42,
+  zh: 180,
+  az: Math.PI/4
 };
-const AZ_HOME = Math.PI/4, AZ_STEP = Math.PI/12;   // 15 degrees per click
+const AZ_HOME = Math.PI/4, AZ_STEP = Math.PI/12;
 
 function proj(u, wv, z){
   const d = D3, ca = Math.cos(d.az), sa = Math.sin(d.az);
@@ -1276,8 +1268,6 @@ function proj(u, wv, z){
 const nrmF = f => Math.min(Math.max(f,0), D3.FMAX)/D3.FMAX;
 function sideForceFn(){ return surfaceSide==='comp' ? compForce : rebForce; }
 
-/* Unit normal to the segment a->b, pointing away from ref. Used to push tick
-   labels and axis titles clear of the box no matter which way it is spun. */
 function outNormal(a, b, ref){
   const dx=b[0]-a[0], dy=b[1]-a[1], m=Math.hypot(dx,dy)||1;
   let nx=-dy/m, ny=dx/m;
@@ -1292,18 +1282,16 @@ const gline = (a,b,w,op) => `<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)
 
 function drawA3D(){
   const d = D3, base = CFG[editing].s, ff = sideForceFn();
-  const NV = 8, NT = 7;                 // aligned to axis ticks: 100mm/s and 10C steps
+  const NV = 8, NT = 7;
   const svgEl = document.getElementById('chartA');
   svgEl.setAttribute('viewBox', '0 0 ' + d.W + ' ' + d.H);
   let s = '';
 
-  /* which two edges of the floor face the camera at this azimuth */
-  const nearW = proj(0.5,1,0)[1] > proj(0.5,0,0)[1] ? 1 : 0;   // temperature edge in front
-  const nearU = proj(1,0.5,0)[1] > proj(0,0.5,0)[1] ? 1 : 0;   // speed edge in front
+  const nearW = proj(0.5,1,0)[1] > proj(0.5,0,0)[1] ? 1 : 0;
+  const nearU = proj(1,0.5,0)[1] > proj(0,0.5,0)[1] ? 1 : 0;
   const farW = 1-nearW, farU = 1-nearU;
-  const ref = proj(0.5,0.5,0.5);                               // centre of the box
+  const ref = proj(0.5,0.5,0.5);
 
-  /* ---- walls (always the two BACK faces) + floor ---- */
   const AXC = 'var(--silver-dim)';
   const wallW = [proj(0,farW,0), proj(1,farW,0), proj(1,farW,1), proj(0,farW,1)];
   const wallU = [proj(farU,0,0), proj(farU,1,0), proj(farU,1,1), proj(farU,0,1)];
@@ -1312,7 +1300,6 @@ function drawA3D(){
   const floor = [proj(0,0,0), proj(1,0,0), proj(1,1,0), proj(0,1,0)];
   s += `<path d="${P(floor)} Z" fill="var(--recess)" stroke="var(--line)" stroke-width="0.8"/>`;
 
-  /* ---- gridlines: force levels up the two back walls, plus a floor grid ---- */
   for(let i=0;i<=4;i++){
     const z=i/4;
     s += gline(proj(0,farW,z), proj(1,farW,z), 0.6, 0.6);
@@ -1324,12 +1311,10 @@ function drawA3D(){
     s += gline(proj(0,q,0), proj(1,q,0), 0.5, 0.34);
   }
 
-  /* ---- cavitation plane ---- */
   const zc = nrmF(CAV_N);
   const cav = [proj(0,0,zc), proj(1,0,zc), proj(1,1,zc), proj(0,1,zc)];
   s += `<path d="${P(cav)} Z" fill="var(--caution)" fill-opacity="0.09" stroke="var(--caution)" stroke-width="1" stroke-dasharray="5,4" stroke-opacity="0.6"/>`;
 
-  /* ---- surface grid + points cache (for hover) ---- */
   const grid=[]; gridPts=[];
   for(let i=0;i<=NV;i++){
     grid[i]=[];
@@ -1343,7 +1328,6 @@ function drawA3D(){
     }
   }
 
-  /* ---- intersection contour with the cavitation plane ---- */
   let contourPts=[];
   for(let i=0;i<=NV;i++){
     for(let j=0;j<NT;j++){
@@ -1360,24 +1344,22 @@ function drawA3D(){
     s += `<path d="${P(contourPts)}" fill="none" stroke="var(--caution)" stroke-width="1.6" stroke-linecap="round"/>`;
   }
 
-  /* ---- surface quads, painter's algorithm on the projected floor position ---- */
   const quads=[];
   for(let i=0;i<NV;i++) for(let j=0;j<NT;j++){
     const zs=[grid[i][j],grid[i+1][j],grid[i+1][j+1],grid[i][j+1]];
     const pts=[proj(i/NV,j/NT,nrmF(zs[0])), proj((i+1)/NV,j/NT,nrmF(zs[1])),
                proj((i+1)/NV,(j+1)/NT,nrmF(zs[2])), proj(i/NV,(j+1)/NT,nrmF(zs[3]))];
     const hAvg = zs.reduce((a,b)=>a+b,0)/4;
-    const isoI = (i%2===0), isoJ = (j%2===0);       // aligns with ticks at 200mm/s & 20C
-    const cFloor = proj((i+0.5)/NV, (j+0.5)/NT, 0); // depth cue survives rotation
+    const isoI = (i%2===0), isoJ = (j%2===0);
+    const cFloor = proj((i+0.5)/NV, (j+0.5)/NT, 0);
     quads.push({depth:cFloor[1], pts, h:nrmF(hAvg), over:hAvg>=CAV_N, iso: isoI||isoJ});
   }
-  quads.sort((a,b)=>a.depth-b.depth);               // furthest (highest on screen) first
+  quads.sort((a,b)=>a.depth-b.depth);
   quads.forEach(q=>{
     const col = heatColor(q.h);
     s += `<path d="${P(q.pts)} Z" fill="${col}" fill-opacity="${q.over?0.5:0.85}" stroke="#0a0d12" stroke-width="${q.iso?0.9:0.35}" stroke-opacity="${q.iso?0.5:0.9}"/>`;
   });
 
-  /* ---- active setups as ridges, matched to the surface side shown ---- */
   const labelBoxes = [];
   active().forEach(c=>{
     const t = oilTemp(c.s);
@@ -1405,10 +1387,8 @@ function drawA3D(){
     s += `<text x="${lx}" y="${ly+3}" font-size="9" fill="${c.color}" font-family="Space Mono,monospace" text-anchor="${lx > d.W-90 ? 'end' : 'start'}">${c.name}${tag} &#183; ${Math.round(t)}&#176;C / ${F(t)}&#8457;</text>`;
   });
 
-  /* ================= NEUTRAL AXES ================= */
   const axis=(a,b)=>`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="var(--silver)" stroke-width="1.7"/>`;
 
-  /* X - shaft speed, drawn along whichever temperature edge is nearest the camera */
   const xa0=proj(0,nearW,0), xa1=proj(1,nearW,0);
   const nX = outNormal(xa0, xa1, ref);
   s += axis(xa0, xa1);
@@ -1420,7 +1400,6 @@ function drawA3D(){
   const xm=proj(0.5,nearW,0);
   s += `<text x="${xm[0]+nX[0]*40}" y="${xm[1]+nX[1]*40+4}" font-size="10.5" fill="var(--silver)" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" letter-spacing="1">X &#183; ${surfaceSide==='comp'?'COMPRESSION':'REBOUND'} SPEED (mm/s)</text>`;
 
-  /* Y - oil temperature, drawn along whichever speed edge is nearest the camera */
   const ya0=proj(nearU,0,0), ya1=proj(nearU,1,0);
   const nY = outNormal(ya0, ya1, ref);
   s += axis(ya0, ya1);
@@ -1432,7 +1411,6 @@ function drawA3D(){
   const ym=proj(nearU,0.5,0);
   s += `<text x="${ym[0]+nY[0]*52}" y="${ym[1]+nY[1]*52+4}" font-size="10.5" fill="var(--silver)" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" letter-spacing="1">Y &#183; OIL TEMPERATURE</text>`;
 
-  /* Z - force, on the left-most vertical corner so it stays clear of the sheet */
   let zCorner=[0,0], bestX=Infinity;
   [[0,0],[1,0],[0,1],[1,1]].forEach(c=>{ const px=proj(c[0],c[1],0)[0]; if(px<bestX){bestX=px; zCorner=c;} });
   const za0=proj(zCorner[0],zCorner[1],0), za1=proj(zCorner[0],zCorner[1],1);
@@ -1445,11 +1423,9 @@ function drawA3D(){
   });
   s += `<text x="${za1[0]+nZ[0]*6}" y="${za1[1]-14}" font-size="10.5" fill="var(--silver)" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" letter-spacing="1">Z &#183; FORCE (N)</text>`;
 
-  /* ---- viewing-angle readout, so the rotate buttons have a reference ---- */
   const deg = ((Math.round(d.az*180/Math.PI) % 360) + 360) % 360;
   s += `<text x="${d.W-6}" y="14" font-size="9" fill="var(--text-dim)" text-anchor="end" font-family="Space Mono,monospace">VIEW ${deg}&#176;${Math.abs(d.az-AZ_HOME)<1e-6?' (HOME)':''}</text>`;
 
-  /* ---- crosshair / hover-tap readout ---- */
   if(hoverPt){
     const p = hoverPt;
     const st = Object.assign({}, base, {ambF:F(p.t), soak:0});
@@ -1482,7 +1458,6 @@ function updateLegend3D(){
     '</b>\\u2019s own clicker settings, swept across every oil temperature. Other setups appear only as thin reference ridges — their line matches their own settings, but the surface underneath them still belongs to '+c.name+'.';
 }
 
-/* ---- pointer interaction: nearest grid point on hover / tap ---- */
 function svgLocal(svg, evt){
   const rect = svg.getBoundingClientRect();
   if(!rect.width) return null;
@@ -1717,8 +1692,6 @@ copyBaseline.addEventListener('click',()=>{
   CFG[editing].s={...CFG[0].s}; CFG[editing].on=true; syncUI(); render();});
 
 /* ============ THEME ============ */
-/* The caribou pattern is now a permanent part of the hero band in both themes.
-   These buttons only swap the colour palette. */
 document.querySelectorAll('[data-theme-btn]').forEach(b=>{
   b.addEventListener('click', ()=>{
     document.documentElement.setAttribute('data-theme', b.dataset.themeBtn);
@@ -1846,7 +1819,6 @@ function buildConversation(){
     if(c.note) h += '<p><em>' + c.note + '</em></p>';
     h += '<p>';
 
-    // oil + temperature
     const o = OILS[s.oil], ob = OILS[bs.oil];
     const nu = nuOf(s), nub = nuOf(bs);
     if(s.oil!==bs.oil || oilTemp(s)!==oilTemp(bs)){
@@ -1860,7 +1832,6 @@ function buildConversation(){
         h += 'Its viscosity index of <span class="good">' + o.vi + '</span> means it holds thickness well, so damping stays close to what you set in the garage. ';
     }
 
-    // low vs high speed compression
     const l = compForce(100,s), lb = compForce(100,bs);
     const hgh = compForce(600,s), hb = compForce(600,bs);
     h += 'Low-speed compression at 100 mm/s is <b>' + Math.round(l) + ' N</b> (' + say(pct(l,lb)) +
@@ -1878,7 +1849,6 @@ function buildConversation(){
     if(s.bleed!==bs.bleed)
       h += 'Free bleed at ' + s.bleed + ' vs ' + bs.bleed + ' ' + (s.bleed>bs.bleed?'lowers':'raises') + ' the floor the clickers work from. ';
 
-    // cavitation
     const peak = compForce(800,s), peakb = compForce(800,bs);
     if(peak>=CAV_N && peakb<CAV_N)
       h += '<span class="warn">This setup pushes past the cavitation ceiling at high shaft speed while the baseline does not</span> — beyond that line the damper struggles to keep oil supplied to the piston, and what the model draws stops being trustworthy. On trail that reads as a sudden harsh spike on square edges. ';
@@ -1887,7 +1857,6 @@ function buildConversation(){
     else if(peak<CAV_N && peakb>=CAV_N)
       h += '<span class="good">It stays under the cavitation ceiling where the baseline does not</span> — high-speed behaviour should be more predictable. ';
 
-    // rebound balance
     const ratio = compForce(400,s)/rebForce(400,s);
     const ratiob = compForce(400,bs)/rebForce(400,bs);
     h += 'Compression-to-rebound balance at 400 mm/s is ' + ratio.toFixed(2) + ':1 against the baseline\u2019s ' + ratiob.toFixed(2) + ':1';
@@ -1895,7 +1864,6 @@ function buildConversation(){
     else if(ratio>1.1) h += ' — compression dominates, which can feel harsh and lively rather than settled. ';
     else h += '. ';
 
-    // spring side
     if(s.spacers!==bs.spacers || s.psi!==bs.psi || s.alt!==bs.alt){
       if(s.spacers<0)
         h += 'On the spring side it is running <b>' + s.spacers.toFixed(1) + ' tokens</b> — a Noken-style high-volume cap. That flattens the curve toward coil-like, so mid-stroke gets more usable and the fork stops ramping so hard at the end. ';
@@ -1926,7 +1894,6 @@ function buildConversation(){
     h += 'With a viscosity index of ' + o.vi + ', ' + (o.vi>=220 ? 'this oil holds up unusually well; a low-VI fluid would fade considerably harder.' : o.vi>=150 ? 'this is a middling result — a high-VI fluid would flatten much of that spread.' : 'this is close to the worst case; a high-VI fluid would cut the spread substantially.') + '</p>';
   }
 
-  // closing tradeoff
   h += '<h4>The tradeoff</h4><p>';
   const hot = A.find(c=>oilTemp(c.s)>45);
   if(hot && hot.id!==0){
@@ -2002,8 +1969,8 @@ function buildRunsCommentary(){
   const ambF = Math.round(s.ambF), ambC = Math.round(C(s.ambF));
   const t1 = oilTemp(sw[0].s), t5 = oilTemp(sw[4].s);
   const rise  = t5 - t1;
-  const step1 = oilTemp(sw[1].s) - t1;               // heat added between run 1 and 2
-  const step5 = t5 - oilTemp(sw[3].s);               // heat added between run 4 and 5
+  const step1 = oilTemp(sw[1].s) - t1;
+  const step5 = t5 - oilTemp(sw[3].s);
 
   const nu1 = nuOf(sw[0].s), nu5 = nuOf(sw[4].s);
   const lsc1 = compForce(100, sw[0].s), lsc5 = compForce(100, sw[4].s);
@@ -2012,19 +1979,16 @@ function buildRunsCommentary(){
   const lsr1 = rebForce(100,  sw[0].s), lsr5 = rebForce(100,  sw[4].s);
   const pk1  = compForce(800, sw[0].s), pk5  = compForce(800, sw[4].s);
 
-  /* air-spring counter-effect, ideal gas, absolute temperature */
   const psiHot = s.psi * (273.15 + t5) / (273.15 + t1);
 
   let h = '';
 
-  /* ---------- 1. ambient, up front ---------- */
   h += '<div class="rc-amb"><b>Ambient air: ' + ambF + ' &#8457; / ' + ambC + ' &#176;C.</b> '
     + 'That is the floor underneath all five runs. Heat soak only ever stacks <em>on top</em> of ambient, and '
     + 'between laps the fork can shed back down toward it but never past it. Run this same fork on a day '
     + '25 &#8457; warmer and it is a measurably different fork by the third lap, with the clickers untouched. '
     + 'Move the Ambient slider and the entire fan below shifts with it.</div>';
 
-  /* ---------- 2. the five runs, as a table ---------- */
   h += '<h5>The five runs, one row each</h5>';
   h += '<table class="rc-table"><thead><tr>'
     + '<th>Run</th><th>Oil temp</th><th>Viscosity</th><th>Comp @100</th><th>vs. run 1</th>'
@@ -2041,14 +2005,13 @@ function buildRunsCommentary(){
   });
   h += '</tbody></table>';
 
-  /* ---------- 3. what is actually heating up ---------- */
   h += '<h5>What is getting hot, and why</h5>';
   h += '<p>A damper is an energy converter with one output: heat. Every bump the fork absorbs is kinetic '
     + 'energy forced through small orifices and turned into warm oil. Nothing else happens to it. On a long '
     + 'descent the fork is doing that hundreds of times a minute, and the aluminium around it cannot shed the '
     + 'heat as fast as the rider makes it &mdash; so it accumulates. Across these five runs the fluid climbs from <b>'
     + Math.round(t1) + '&#176;C / ' + F(t1) + '&#8457;</b> to <b>' + Math.round(t5) + '&#176;C / ' + F(t5)
-    + '&#8457;</b>, a gain of <b>' + Math.round(rise) + ' &#176;C / ' + Math.round(rise*9/5) + ' &#8457;</b>.</p>';
+    + '&#8457;</b>, a gain of <b>' + Math.round(rise) + ' &#176;C / ' + Math.round(rise*9/5) + ' &#176;F</b>.</p>';
   h += '<p>Notice the gain is front-loaded. Run 1 to run 2 adds about <b>' + step1.toFixed(1) + ' &#176;C</b>; '
     + 'run 4 to run 5 adds only <b>' + step5.toFixed(1) + ' &#176;C</b>. The fork is approaching the temperature '
     + 'where the heat it makes and the heat it sheds balance out. Most of the change a rider notices across a '
@@ -2056,7 +2019,6 @@ function buildRunsCommentary(){
     + '<em>feel</em> the most different are the early ones, and why a mid-day setup change made on lap four is '
     + 'being made on a fork that has nearly stopped moving.</p>';
 
-  /* ---------- 4. what the heat does to the oil ---------- */
   h += '<h5>What that does to the fluid</h5>';
   h += '<p>You are running <b>' + o.n + '</b>, viscosity index <b>' + o.vi + '</b>. Over those five runs its '
     + 'thickness falls from <b>' + nu1.toFixed(1) + ' cSt</b> to <b>' + nu5.toFixed(1) + ' cSt</b> ('
@@ -2071,7 +2033,6 @@ function buildRunsCommentary(){
       : 'A VI of ' + o.vi + ' is at the soft end. This is close to the worst case for fade; a high-VI fluid '
         + 'would cut the spread substantially.') + '</p>';
 
-  /* ---------- 5. where the loss lands ---------- */
   h += '<h5>Where the loss lands &mdash; and where it does not</h5>';
   h += '<p>The fade is not spread evenly across the curve. Between run 1 and run 5:</p>';
   h += '<p><b>Low speed (100 mm/s)</b> &mdash; ' + Math.round(lsc1) + ' N down to ' + Math.round(lsc5)
@@ -2093,7 +2054,6 @@ function buildRunsCommentary(){
     + 'lower in its travel, steepening the head angle a degree or so, arriving at the bottom-out zone earlier '
     + 'than it did on lap one. Most riders diagnose that as being tired. Some of it is the fork.</p>';
 
-  /* ---------- 6. cavitation margin ---------- */
   h += '<h5>The cavitation ceiling</h5>';
   if(pk1 >= CAV_N && pk5 >= CAV_N){
     h += '<p>Peak compression stays above the ' + CAV_N + ' N ceiling on every one of the five runs ('
@@ -2110,7 +2070,6 @@ function buildRunsCommentary(){
       + 'entirely about low-speed support draining away.</p>';
   }
 
-  /* ---------- 7. the counter-effect nobody models ---------- */
   h += '<h5>The part that pushes back the other way</h5>';
   h += '<p>Heat does not only soften things. The air spring is a sealed gas volume, so the same heat raises its '
     + 'pressure &mdash; roughly 3 to 4 % for every 10 &#176;C. Your ' + s.psi + ' psi would read closer to <b>'
@@ -2121,13 +2080,11 @@ function buildRunsCommentary(){
     + 'soft," it feels like the fork stopped controlling itself. <b>This effect is not in the model</b> &mdash; '
     + 'Panel B still draws the spring curve at the pressure you set.</p>';
 
-  /* ---------- 8. bath oil / friction ---------- */
   h += '<p>Bushing friction moves too. On <b>' + bo.n.split(' \u00b7 ')[0] + '</b> the breakaway force falls from about <b>'
     + Math.round(stiction(sw[0].s)) + ' N</b> cold to <b>' + Math.round(stiction(sw[4].s)) + ' N</b> hot. '
     + 'A warm fork is a smoother fork off the top &mdash; the one honest improvement on this list, and the reason '
     + 'a first run down often feels harsh in a way that has nothing to do with the damper.</p>';
 
-  /* ---------- 9. the honest caveat ---------- */
   h += '<div class="rc-caveat"><b>WHAT THIS SIMULATION IS NOT</b><br>'
     + 'The heat curve here is <em>soak(n) = 40 &#183; (1 &minus; e<sup>&minus;n/2</sup>)</em>: a 40 &#176;C ceiling '
     + 'and a two-run time constant. Both are picked, not measured. Real heat build depends on descent length, '
@@ -2145,7 +2102,7 @@ let runsGen = 0, renderSkipRuns = false;
 function drawRunsChart(animate){
   const svg = document.getElementById('chartRuns');
   const legend = document.getElementById('runsLegend');
-  const gen = ++runsGen;          // any timeout from an earlier call is now stale
+  const gen = ++runsGen;
   legend.innerHTML = '';
 
   if(!runSweep){
@@ -2203,7 +2160,7 @@ function drawRunsChart(animate){
   }
   sw.forEach((r,i)=>{
     setTimeout(()=>{
-      if(gen !== runsGen) return;   // a newer draw superseded this one
+      if(gen !== runsGen) return;
       const g = document.getElementById('runGroup'+r.n);
       const lg = document.getElementById('runLeg'+r.n);
       if(g) g.style.opacity = '1';
@@ -2240,7 +2197,9 @@ runCta.addEventListener('click',()=>{
 });
 syncRunUI();
 
-/* ============ NEW ALTITUDE LOGIC ============ */
+/* ============ NEW ALTITUDE & ATMOSPHERE LOGIC ============ */
+let activeComponentType = 'TIRE';
+
 function calcAltitudeDrift() {
   const p1_gauge = parseFloat(document.getElementById('altPsi').value);
   const h1 = parseFloat(document.getElementById('altStartElev').value);
@@ -2248,11 +2207,9 @@ function calcAltitudeDrift() {
   const h2 = parseFloat(document.getElementById('altTargetElev').value);
   const t2_f = parseFloat(document.getElementById('altTargetTemp').value);
 
-  // Convert temp to Rankine for Ideal Gas Law
   const t1_r = t1_f + 459.67;
   const t2_r = t2_f + 459.67;
 
-  // Atmospheric pressure based on standard atmospheric model
   const p_atm1 = 14.6959 * Math.pow(1 - (0.0000068756 * h1), 5.2559);
   const p_atm2 = 14.6959 * Math.pow(1 - (0.0000068756 * h2), 5.2559);
 
@@ -2271,7 +2228,7 @@ function calcAltitudeDrift() {
   document.getElementById('tblFinalPsi').textContent = fmt(p2_gauge);
 
   const pct = Math.abs((p2_gauge - p1_gauge) / p1_gauge * 100).toFixed(1);
-  let context = `This <b>${Math.abs(p2_gauge - p1_gauge).toFixed(1)} psi</b> absolute shift represents a <b>${pct}%</b> change in spring rate. `;
+  let context = `This <b>${Math.abs(p2_gauge - p1_gauge).toFixed(1)} psi</b> absolute shift represents a <b>${pct}%</b> change in ${activeComponentType === 'TIRE' ? '' : 'spring rate '}`;
   
   if (p1_gauge < 50) {
     context += `Because tires run at low pressures, this is a massive change. You will feel a dramatic shift in traction, deflection, and compliance.`;
@@ -2288,9 +2245,15 @@ function calcAltitudeDrift() {
 ['altPsi', 'altStartElev', 'altStartTemp', 'altTargetElev', 'altTargetTemp'].forEach(id => {
   document.getElementById(id).addEventListener('input', e => {
     let v = e.target.value;
-    if(id.includes('Elev')) document.getElementById(id+'Val').textContent = v + ' ft';
-    else if(id.includes('Temp')) document.getElementById(id+'Val').textContent = v + ' \u00B0F';
-    else if(id.includes('Psi')) document.getElementById(id+'Val').textContent = parseFloat(v).toFixed(1) + ' psi';
+    if(id.includes('Elev')) {
+      document.getElementById(id+'Val').textContent = v + ' ft';
+    } else if(id.includes('Temp')) {
+      let fVal = parseFloat(v);
+      let cVal = Math.round((fVal - 32) * 5 / 9);
+      document.getElementById(id+'Val').textContent = fVal + ' \u00B0F (' + cVal + ' \u00B0C)';
+    } else if(id.includes('Psi')) {
+      document.getElementById(id+'Val').textContent = parseFloat(v).toFixed(1) + ' psi';
+    }
     calcAltitudeDrift();
   });
 });
@@ -2299,6 +2262,7 @@ document.querySelectorAll('#compSeg button').forEach(b => {
   b.addEventListener('click', () => {
     document.querySelectorAll('#compSeg button').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
+    activeComponentType = b.textContent.trim();
     const v = parseFloat(b.dataset.val);
     document.getElementById('altPsi').value = v;
     document.getElementById('altPsiVal').textContent = v.toFixed(1) + ' psi';
