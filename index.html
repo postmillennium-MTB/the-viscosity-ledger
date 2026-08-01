@@ -377,6 +377,8 @@
   .runs-commentary em{color:var(--text); font-style:italic;}
   .rc-amb{background:var(--recess); border:1px solid var(--line); border-left:2px solid var(--dust);
     padding:11px 13px; margin:0 0 14px; font-size:12.5px; line-height:1.65;}
+  
+  /* Tables */
   .rc-table{width:100%; border-collapse:collapse; margin:2px 0 13px;
     font-family:'Space Mono',monospace; font-size:10.5px;}
   .rc-table th{text-align:right; padding:6px 7px; border-bottom:1px solid var(--line);
@@ -385,6 +387,7 @@
   .rc-table td{text-align:right; padding:6px 7px; border-bottom:1px solid var(--line); color:var(--text-soft);}
   .rc-table tr:last-child td{border-bottom:0;}
   .rc-table td .sw{display:inline-block; width:9px; height:9px; margin-right:7px; vertical-align:-1px;}
+  
   .rc-caveat{font-size:11px; line-height:1.6; color:var(--text-dim);
     background:rgba(140,58,30,.07); border:1px solid rgba(140,58,30,.28);
     border-left:2px solid var(--caution); padding:10px 12px; margin:12px 0 0;}
@@ -620,25 +623,6 @@
               <button data-speed="fast">FAST</button></div></div>
         </div>
       </div>
-
-      <!-- ALTITUDE & ATMOSPHERE -->
-      <div class="card collapsed" id="card-altitude">
-        <button class="card-head" data-toggle="card-altitude">
-          <span class="chev"></span>
-          <span class="card-title"><span class="dot" style="background:var(--silver)"></span>Altitude &amp; Atmosphere</span>
-        </button>
-        <div class="card-body">
-          <p class="card-sub">Atmospheric pressure drops as you climb. Because your digital gauge measures relative to the outside air, taking a sealed fork to altitude increases its effective gauge pressure.</p>
-          <p class="scope-note" id="altScopeNote">Editing <b id="altScopeName">BASELINE</b> only. These changes apply to this one scenario — switch setups above to compare.</p>
-          <div class="row">
-            <label>Elevation</label>
-            <input type="range" id="alt" min="0" max="14000" step="500">
-            <span class="val-chip" id="altVal" style="min-width:74px">0 ft</span>
-          </div>
-          <p class="hint">Assumes the fork was pressurized at sea level (0 ft). Higher elevations effectively stiffen the air spring.</p>
-        </div>
-      </div>
-
     </div>
 
     <!-- CHARTS -->
@@ -814,6 +798,105 @@ F_stiction  = 8 + 26 &middot; (&nu;_bath / 32)^0.45</div>
       </div>
     </div>
   </main>
+  
+  <!-- NEW ALTITUDE & ATMOSPHERE SECTION -->
+  <div class="card collapsed" id="card-alt-pressure" style="margin-top:20px;">
+    <button class="card-head" data-toggle="card-alt-pressure">
+      <span class="chev"></span>
+      <span class="card-title"><span class="dot" style="background:var(--silver)"></span>Atmospheric &amp; Thermal Drift (Tire &amp; Suspension)</span>
+    </button>
+    <div class="card-body">
+      <p class="card-sub" style="max-width:100%;">Calculate the net gauge pressure shift based on elevation and temperature. Because shock pumps and tire gauges measure relative to outside air, ascending a mountain increases effective pressure inside sealed chambers, while dropping temperatures decrease it.</p>
+      
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:24px; align-items:start; margin-top:16px;">
+        
+        <!-- LEFT SIDE: STARTING CONDITIONS -->
+        <div>
+          <h5 style="margin:0 0 12px; font-size:10px; letter-spacing:0.16em; color:var(--dust); text-transform:uppercase; font-weight:400;">Starting Conditions</h5>
+          
+          <div class="row" style="margin-bottom:8px;">
+            <label>Component</label>
+            <div class="seg" id="compSeg">
+              <button class="active" data-val="25">TIRE</button>
+              <button data-val="80">FORK</button>
+              <button data-val="180">SHOCK</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <label>Start PSI</label>
+            <input type="range" id="altPsi" min="10" max="300" step="0.5" value="25">
+            <span class="val-chip" id="altPsiVal" style="min-width:74px">25.0 psi</span>
+          </div>
+
+          <div class="row">
+            <label>Start Elev.</label>
+            <input type="range" id="altStartElev" min="0" max="14000" step="500" value="5000">
+            <span class="val-chip" id="altStartElevVal" style="min-width:74px">5000 ft</span>
+          </div>
+
+          <div class="row">
+            <label>Start Temp</label>
+            <input type="range" id="altStartTemp" min="10" max="110" step="1" value="70">
+            <span class="val-chip" id="altStartTempVal" style="min-width:74px">70 &deg;F</span>
+          </div>
+          <p class="hint">Set these to match the conditions where you are actually filling the air (e.g., your warm garage or base area hotel).</p>
+        </div>
+
+        <!-- RIGHT SIDE: TARGET EXPECTATIONS -->
+        <div>
+          <h5 style="margin:0 0 12px; font-size:10px; letter-spacing:0.16em; color:var(--dust); text-transform:uppercase; font-weight:400;">Expected at Summit</h5>
+          
+          <div class="row">
+            <label>Target Elev.</label>
+            <input type="range" id="altTargetElev" min="0" max="14000" step="500" value="10000">
+            <span class="val-chip" id="altTargetElevVal" style="min-width:74px">10000 ft</span>
+          </div>
+
+          <div class="row">
+            <label>Target Temp</label>
+            <input type="range" id="altTargetTemp" min="10" max="110" step="1" value="45">
+            <span class="val-chip" id="altTargetTempVal" style="min-width:74px">45 &deg;F</span>
+          </div>
+          
+          <table class="rc-table" style="margin-top:20px;">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Adjustment</th>
+                <th>Unit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Starting Gauge</td>
+                <td id="tblStartPsi">25.00</td>
+                <td>PSI</td>
+              </tr>
+              <tr>
+                <td>Atmosphere &Delta;</td>
+                <td id="tblAtmDelta">+0.00</td>
+                <td>PSI</td>
+              </tr>
+              <tr>
+                <td>Temperature &Delta;</td>
+                <td id="tblTempDelta">-0.00</td>
+                <td>PSI</td>
+              </tr>
+              <tr style="border-top:1px solid var(--line);">
+                <td style="font-weight:400; color:var(--text);">Final Gauge</td>
+                <td id="tblFinalPsi" style="font-weight:400; color:var(--dust); font-size:13px;">25.00</td>
+                <td>PSI</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p class="hint" id="altContextHint" style="margin-top:12px; font-style:normal;"></p>
+        </div>
+        
+      </div>
+    </div>
+  </div>
 
   <footer>
     PMR Suspension Lab · postmillenniumrenaissance.com<br>
@@ -1519,9 +1602,6 @@ function syncUI(){
   rcrossRow.style.opacity=s.rlink?0.45:1;
   psi.value=s.psi; psiVal.textContent=s.psi+' psi';
   
-  // Sync altitude
-  alt.value=s.alt; altVal.textContent=s.alt+' ft';
-  
   spacerVal.textContent=(s.spacers>0?'+':'')+s.spacers.toFixed(1);
   spacerVal.style.color = s.spacers<0 ? '#B8763F' : 'var(--spring)';
   nokenBadge.classList.toggle('on', s.spacers<0);
@@ -1531,8 +1611,6 @@ function syncUI(){
   cfgNote.style.display = c.note ? '' : 'none';
   springScopeName.textContent = c.name;
   springScopeName.style.color = c.color;
-  altScopeName.textContent = c.name;
-  altScopeName.style.color = c.color;
   enableChk.checked=c.on;
   enableChk.disabled=(c.id===0);
   enableTxt.textContent = c.id===0 ? 'Baseline always shown' : 'Show on chart';
@@ -1576,7 +1654,7 @@ function render(){
 document.querySelectorAll('.card-head').forEach(b=>b.addEventListener('click',()=>
   document.getElementById(b.dataset.toggle).classList.toggle('collapsed')));
 
-[['temp','soak',v=>'+'+v+' \u00B0C / +'+Math.round(v*9/5)+' \u00B0F'],['amb','ambF',v=>Math.round(C(+v))+' \u00B0C / '+v+' \u00B0F'],['bleed','bleed',v=>v],['cross','cross',v=>v+' mm/s'],['psi','psi',v=>v+' psi'],['alt','alt',v=>v+' ft']]
+[['temp','soak',v=>'+'+v+' \u00B0C / +'+Math.round(v*9/5)+' \u00B0F'],['amb','ambF',v=>Math.round(C(+v))+' \u00B0C / '+v+' \u00B0F'],['bleed','bleed',v=>v],['cross','cross',v=>v+' mm/s'],['psi','psi',v=>v+' psi']]
 .forEach(([id,key,fmt])=>{
   document.getElementById(id).addEventListener('input',e=>{
     cur()[key]=+e.target.value;
@@ -1899,9 +1977,6 @@ document.querySelectorAll('.mini-toggle').forEach(b=>b.addEventListener('click',
 /* ============ RUN SWEEP - own dedicated chart ============ */
 const LAP_NAMES = ['First Lap','Lap 2','Warming Up','Getting Hot','Last Run'];
 
-
-/* ---- Commentary that sits under the 5-run chart. Rebuilt on every draw so the
-   numbers always describe the five runs actually on screen. ---- */
 function buildRunsCommentary(){
   const el = document.getElementById('runsCommentary');
   if(!el) return;
@@ -2153,9 +2228,76 @@ runCta.addEventListener('click',()=>{
 });
 syncRunUI();
 
+/* ============ NEW ALTITUDE LOGIC ============ */
+function calcAltitudeDrift() {
+  const p1_gauge = parseFloat(document.getElementById('altPsi').value);
+  const h1 = parseFloat(document.getElementById('altStartElev').value);
+  const t1_f = parseFloat(document.getElementById('altStartTemp').value);
+  const h2 = parseFloat(document.getElementById('altTargetElev').value);
+  const t2_f = parseFloat(document.getElementById('altTargetTemp').value);
+
+  // Convert temp to Rankine for Ideal Gas Law
+  const t1_r = t1_f + 459.67;
+  const t2_r = t2_f + 459.67;
+
+  // Atmospheric pressure based on standard atmospheric model
+  const p_atm1 = 14.6959 * Math.pow(1 - (0.0000068756 * h1), 5.2559);
+  const p_atm2 = 14.6959 * Math.pow(1 - (0.0000068756 * h2), 5.2559);
+
+  const p1_abs = p1_gauge + p_atm1;
+  const p2_abs = p1_abs * (t2_r / t1_r);
+  const p2_gauge = p2_abs - p_atm2;
+
+  const elev_effect = (p1_abs - p_atm2) - p1_gauge;
+  const temp_effect = ((p1_abs * (t2_r / t1_r)) - p_atm1) - p1_gauge;
+
+  const fmt = (v) => (v > 0 ? '+' : '') + v.toFixed(2);
+  
+  document.getElementById('tblStartPsi').textContent = p1_gauge.toFixed(2);
+  document.getElementById('tblAtmDelta').textContent = fmt(elev_effect);
+  document.getElementById('tblTempDelta').textContent = fmt(temp_effect);
+  document.getElementById('tblFinalPsi').textContent = fmt(p2_gauge);
+
+  const pct = Math.abs((p2_gauge - p1_gauge) / p1_gauge * 100).toFixed(1);
+  let context = `This <b>${Math.abs(p2_gauge - p1_gauge).toFixed(1)} psi</b> absolute shift represents a <b>${pct}%</b> change in spring rate. `;
+  
+  if (p1_gauge < 50) {
+    context += `Because tires run at low pressures, this is a massive change. You will feel a dramatic shift in traction, deflection, and compliance.`;
+  } else if (p1_gauge < 120) {
+    context += `For a fork air spring, this is noticeable to a sensitive rider but might only represent a few millimeters of ride height difference.`;
+  } else {
+    context += `For a high-pressure rear shock, this change is negligible and completely imperceptible on the trail.`;
+  }
+  
+  document.getElementById('altContextHint').innerHTML = context;
+}
+
+// Bind altitude events
+['altPsi', 'altStartElev', 'altStartTemp', 'altTargetElev', 'altTargetTemp'].forEach(id => {
+  document.getElementById(id).addEventListener('input', e => {
+    let v = e.target.value;
+    if(id.includes('Elev')) document.getElementById(id+'Val').textContent = v + ' ft';
+    else if(id.includes('Temp')) document.getElementById(id+'Val').textContent = v + ' \u00B0F';
+    else if(id.includes('Psi')) document.getElementById(id+'Val').textContent = parseFloat(v).toFixed(1) + ' psi';
+    calcAltitudeDrift();
+  });
+});
+
+document.querySelectorAll('#compSeg button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#compSeg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    const v = parseFloat(b.dataset.val);
+    document.getElementById('altPsi').value = v;
+    document.getElementById('altPsiVal').textContent = v.toFixed(1) + ' psi';
+    calcAltitudeDrift();
+  });
+});
+
 /* ============ INIT ============ */
 Object.keys(DIALS).forEach(buildDial);
 syncUI(); render();
+calcAltitudeDrift();
 </script>
 </body>
 </html>
