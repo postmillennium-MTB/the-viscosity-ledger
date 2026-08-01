@@ -620,6 +620,25 @@
               <button data-speed="fast">FAST</button></div></div>
         </div>
       </div>
+
+      <!-- ALTITUDE & ATMOSPHERE -->
+      <div class="card collapsed" id="card-altitude">
+        <button class="card-head" data-toggle="card-altitude">
+          <span class="chev"></span>
+          <span class="card-title"><span class="dot" style="background:var(--silver)"></span>Altitude &amp; Atmosphere</span>
+        </button>
+        <div class="card-body">
+          <p class="card-sub">Atmospheric pressure drops as you climb. Because your digital gauge measures relative to the outside air, taking a sealed fork to altitude increases its effective gauge pressure.</p>
+          <p class="scope-note" id="altScopeNote">Editing <b id="altScopeName">BASELINE</b> only. These changes apply to this one scenario — switch setups above to compare.</p>
+          <div class="row">
+            <label>Elevation</label>
+            <input type="range" id="alt" min="0" max="14000" step="500">
+            <span class="val-chip" id="altVal" style="min-width:74px">0 ft</span>
+          </div>
+          <p class="hint">Assumes the fork was pressurized at sea level (0 ft). Higher elevations effectively stiffen the air spring.</p>
+        </div>
+      </div>
+
     </div>
 
     <!-- CHARTS -->
@@ -760,7 +779,10 @@ soak(n) = 40 &middot; ( 1 &minus; e^(&minus;n/2) )   <span class="cm">n = run nu
             <p>Each run adds less heat than the one before, approaching an equilibrium the damper can shed.</p>
 
             <h4>5 &middot; Spring, bottom-out and friction</h4>
-            <div class="eq">F_spring(x) = (psi/100) &middot; (x / 170)^prog &middot; 4000
+            <div class="eq">P_atm(h) = 14.6959 &middot; (1 &minus; 0.0000068756 &middot; alt)^5.2559
+P_diff = 14.6959 &minus; P_atm(h)
+
+F_spring(x) = ((psi + P_diff)/100) &middot; (x / 170)^prog &middot; 4000
 prog        = max( 0.95 , 1.6 + tokens &times; 0.35 )
 
 F_hbo(x)    = 1800 &middot; ((x &minus; 145)/25)^1.5 &middot; speedMult &middot; &mu;^0.4   <span class="cm">x &gt; 145 mm only</span>
@@ -832,7 +854,7 @@ const DEFAULT_OIL = 7, DEFAULT_BATH = 0;
 /* ============ CONFIGS ============ */
 function blank(){return{LSC:11,HSC:3,LSR:10,HSR:3,temp:20,bleed:4,cross:150,
   psi:100,spacers:1,speed:'med',oil:DEFAULT_OIL,bath:DEFAULT_BATH,rcross:150,rlink:true,
-  ambF:68, soak:0};}
+  ambF:68, soak:0, alt:0};}
 const CFG = [
   {id:0, name:'BASELINE',  dash:'',       color:'#C9A227', on:true,  note:'', s:blank()},
   {id:1, name:'SETTING 1', dash:'7,5',    color:'#B8763F', on:false, note:'', s:blank()},
@@ -890,10 +912,14 @@ function rebForce(v,s){
 const CAV_N = 1950; // force above which a fork this size tends to cavitate / go harsh
 const TRAVEL = 170;
 function springF(x,s){
+  // Atmospheric pressure decay offsets external pressure against internal
+  const p_atm = 14.6959 * Math.pow(1 - (0.0000068756 * (s.alt || 0)), 5.2559);
+  const effectivePsi = s.psi + (14.6959 - p_atm);
+  
   // Negative tokens (Noken-style high-volume cap) raise air volume, lowering the
   // compression ratio -> flatter, more coil-like curve. Floor keeps it physical.
   const prog = Math.max(0.95, 1.6 + s.spacers*0.35);
-  return (s.psi/100)*Math.pow(x/TRAVEL, prog)*4000;
+  return (effectivePsi/100)*Math.pow(x/TRAVEL, prog)*4000;
 }
 function hboF(x,s){
   const start = TRAVEL-25;
@@ -1068,7 +1094,7 @@ function drawAmbBar(){
   el.innerHTML=g;
 }
 
-/* ============ PANEL A ============ *//* ============ PANEL A ============ */
+/* ============ PANEL A ============ */
 function drawA(){
   const w=660,h=320, xa=-800,xb=800, ya=0,yb=2400;
   let s='';
@@ -1492,6 +1518,10 @@ function syncUI(){
   rcross.disabled=s.rlink;
   rcrossRow.style.opacity=s.rlink?0.45:1;
   psi.value=s.psi; psiVal.textContent=s.psi+' psi';
+  
+  // Sync altitude
+  alt.value=s.alt; altVal.textContent=s.alt+' ft';
+  
   spacerVal.textContent=(s.spacers>0?'+':'')+s.spacers.toFixed(1);
   spacerVal.style.color = s.spacers<0 ? '#B8763F' : 'var(--spring)';
   nokenBadge.classList.toggle('on', s.spacers<0);
@@ -1501,6 +1531,8 @@ function syncUI(){
   cfgNote.style.display = c.note ? '' : 'none';
   springScopeName.textContent = c.name;
   springScopeName.style.color = c.color;
+  altScopeName.textContent = c.name;
+  altScopeName.style.color = c.color;
   enableChk.checked=c.on;
   enableChk.disabled=(c.id===0);
   enableTxt.textContent = c.id===0 ? 'Baseline always shown' : 'Show on chart';
@@ -1544,7 +1576,7 @@ function render(){
 document.querySelectorAll('.card-head').forEach(b=>b.addEventListener('click',()=>
   document.getElementById(b.dataset.toggle).classList.toggle('collapsed')));
 
-[['temp','soak',v=>'+'+v+' \u00B0C / +'+Math.round(v*9/5)+' \u00B0F'],['amb','ambF',v=>Math.round(C(+v))+' \u00B0C / '+v+' \u00B0F'],['bleed','bleed',v=>v],['cross','cross',v=>v+' mm/s'],['psi','psi',v=>v+' psi']]
+[['temp','soak',v=>'+'+v+' \u00B0C / +'+Math.round(v*9/5)+' \u00B0F'],['amb','ambF',v=>Math.round(C(+v))+' \u00B0C / '+v+' \u00B0F'],['bleed','bleed',v=>v],['cross','cross',v=>v+' mm/s'],['psi','psi',v=>v+' psi'],['alt','alt',v=>v+' ft']]
 .forEach(([id,key,fmt])=>{
   document.getElementById(id).addEventListener('input',e=>{
     cur()[key]=+e.target.value;
@@ -1613,7 +1645,7 @@ function openPanels(ids){
 qlOil.addEventListener('click', ()=>{
   runSweep=false; runBtn.textContent='Simulate 5 runs \u2014 heat build'; runBtn.style.opacity=1;
   const shared = {LSC:11, HSC:3, LSR:10, HSR:3, bleed:4, cross:150,
-                  psi:100, spacers:1, speed:'med', ambF:95, soak:0, bath:0};
+                  psi:100, spacers:1, speed:'med', ambF:95, soak:0, bath:0, alt:0};
   CFG[0].name='MID-VI OIL';  CFG[0].color='#C9A227'; CFG[0].dash='';
   CFG[0].note='Motorex Racing Fork 10, VI 200 \u2014 the middle of the pack.';
   CFG[0].on=true; CFG[0].s=Object.assign(blank(), shared, {oil:IDX('Motorex Racing Fork 10')});
@@ -1632,7 +1664,7 @@ qlOil.addEventListener('click', ()=>{
 qlTokens.addEventListener('click', ()=>{
   runSweep=false; runBtn.textContent='Simulate 5 runs \u2014 heat build'; runBtn.style.opacity=1;
   const shared = {LSC:11, HSC:3, LSR:10, HSR:3, bleed:4, cross:150,
-                  oil:DEFAULT_OIL, ambF:68, soak:0, speed:'med', bath:0, psi:100};
+                  oil:DEFAULT_OIL, ambF:68, soak:0, speed:'med', bath:0, psi:100, alt:0};
   CFG[0].name='STANDARD';   CFG[0].color='#C9A227'; CFG[0].dash='';
   CFG[0].note='1.0 tokens \u2014 a normal progressive setup.';
   CFG[0].on=true; CFG[0].s=Object.assign(blank(), shared, {spacers:1});
@@ -1651,7 +1683,7 @@ qlTokens.addEventListener('click', ()=>{
 qlTemp.addEventListener('click', ()=>{
   runSweep=false; runBtn.textContent='Simulate 5 runs \u2014 heat build'; runBtn.style.opacity=1;
   const shared = {LSC:11, HSC:3, LSR:10, HSR:3, bleed:4, cross:150,
-                  oil:DEFAULT_OIL, spacers:1, psi:100, speed:'med', bath:0, soak:0};
+                  oil:DEFAULT_OIL, spacers:1, psi:100, speed:'med', bath:0, soak:0, alt:0};
   CFG[0].name='NORMAL 68\u00B0F';  CFG[0].color='#C9A227'; CFG[0].dash='';
   CFG[0].note='A mild trailside morning \u2014 no heat soak either.';
   CFG[0].on=true; CFG[0].s=Object.assign(blank(), shared, {ambF:68});
@@ -1676,7 +1708,7 @@ function loadDemo(){
   CFG[0].s=Object.assign(blank(),{
     LSC:12, HSC:3, LSR:11, HSR:3,
     oil:IDX('Motorex Racing Fork 10'), ambF:68, soak:0, bleed:4, cross:150,
-    psi:100, spacers:1, speed:'med', bath:0});
+    psi:100, spacers:1, speed:'med', bath:0, alt:0});
 
   CFG[1].name='RUN 4 — HOT';
   CFG[1].note='Same clicks, same bike. 86 °F desert ambient plus four laps of heat soak, on low-VI oil.';
@@ -1684,7 +1716,7 @@ function loadDemo(){
   CFG[1].s=Object.assign(blank(),{
     LSC:12, HSC:3, LSR:11, HSR:3,
     oil:IDX('Bel-Ray Fork Oil 10wt'), ambF:86, soak:28, bleed:4, cross:150,
-    psi:100, spacers:1, speed:'fast', bath:0});
+    psi:100, spacers:1, speed:'fast', bath:0, alt:0});
 
   CFG[2].name='NOKEN + HIGH VI';
   CFG[2].note='72 °F ambient, moderate soak. Negative token for a coil-like curve, high-VI oil, opened low speed and firmer high speed.';
@@ -1692,7 +1724,7 @@ function loadDemo(){
   CFG[2].s=Object.assign(blank(),{
     LSC:6, HSC:5, LSR:8, HSR:4,
     oil:IDX('RockShox 10wt (Torco 15)'), ambF:72, soak:16, bleed:7, cross:190,
-    psi:106, spacers:-1, speed:'fast', bath:1});
+    psi:106, spacers:-1, speed:'fast', bath:1, alt:0});
 
   editing=0; syncUI(); render();
   document.getElementById('card-convo').classList.remove('collapsed');
@@ -1774,12 +1806,13 @@ function buildConversation(){
     else h += '. ';
 
     // spring side
-    if(s.spacers!==bs.spacers || s.psi!==bs.psi){
+    if(s.spacers!==bs.spacers || s.psi!==bs.psi || s.alt!==bs.alt){
       if(s.spacers<0)
         h += 'On the spring side it is running <b>' + s.spacers.toFixed(1) + ' tokens</b> — a Noken-style high-volume cap. That flattens the curve toward coil-like, so mid-stroke gets more usable and the fork stops ramping so hard at the end. ';
       else if(s.spacers!==bs.spacers)
         h += 'Tokens at ' + s.spacers.toFixed(1) + ' vs ' + bs.spacers.toFixed(1) + ' make the spring ' + (s.spacers>bs.spacers?'more progressive':'more linear') + '. ';
       if(s.psi!==bs.psi) h += 'Air is ' + s.psi + ' psi against ' + bs.psi + '. ';
+      if(s.alt!==bs.alt) h += 'Running at ' + s.alt + ' ft altitude adds effective gauge pressure. ';
     }
     const bot = springF(TRAVEL,s)+hboF(TRAVEL,s), botb = springF(TRAVEL,bs)+hboF(TRAVEL,bs);
     h += 'Force at full bottom comes out <b>' + Math.round(bot) + ' N</b> (' + say(pct(bot,botb)) + '), with HBO contributing ' +
@@ -1854,7 +1887,7 @@ function buildELI(){
     h += '<p>Notice they spread wide near the middle of the chart and squeeze back together out at the edges. Heat steals the fork\u2019s slow-speed support long before it touches its ability to handle big hits. That is why a fork four runs into a bike park day feels vague and wallowy rather than obviously soft — and it happens on both the compression and the rebound side at once, so the fork gets loose going in <em>and</em> coming back out.</p>';
   }
 
-  h += '<h5>Why nothing moves when you change air pressure</h5><p>Air pressure and tokens do not appear on this chart at all, and that is on purpose. A fork has two separate systems doing two separate jobs. The <b>spring</b> — air and tokens — decides how hard it is to squash the fork and how far it goes. The <b>damper</b> — oil and clickers — decides how <em>fast</em> it is allowed to move. This chart is the damper only. To see your spring and token changes, look at <b>Panel B</b>, force against travel, further down the page.</p>';
+  h += '<h5>Why nothing moves when you change air pressure</h5><p>Air pressure, tokens, and altitude do not appear on this chart at all, and that is on purpose. A fork has two separate systems doing two separate jobs. The <b>spring</b> — air and tokens — decides how hard it is to squash the fork and how far it goes. The <b>damper</b> — oil and clickers — decides how <em>fast</em> it is allowed to move. This chart is the damper only. To see your spring and token changes, look at <b>Panel B</b>, force against travel, further down the page.</p>';
 
   return h;
 }
